@@ -127,13 +127,13 @@
                             name: fullName, roll: roll, sec: "A", course: "", sem: "1", regNo: "", targetPct: 75, avatar: "https://placehold.co/120x120/00d2ff/ffffff?text=U", email: email
                         },
                         subjects: [],
-                        timetable: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] },
+                        timetable: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: []},
                         historyLog: [],
                         overrides: {}
                     });
 
                     alert('Sign-up successful! Welcome to Attendance Master.');
-                    window.location.href = "attendance.html"; // Route to dashboard
+                    window.location.href = "account.html?newuser=true"; // Route to account
                 } catch (error) {
                     showError(error.message); // Firebase provides readable error messages!
                 }
