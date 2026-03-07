@@ -20,7 +20,7 @@ const db = firebase.firestore();
 
 // Global State Variables
 let subjects = [];
-let timetable = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] };
+let timetable = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [] };
 let historyLog = [];
 let userProfile = { name: "", roll: "", sec: "", course: "", sem: "", regNo: "", targetPct: 75, avatar: "https://placehold.co/120x120/00d2ff/ffffff?text=U" };
 let overrides = {}; // Tracks specific day cancellations and extra classes
@@ -688,4 +688,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localProfile) userProfile = JSON.parse(localProfile);
 
     refreshAllUI();
+
 });
