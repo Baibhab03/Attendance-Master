@@ -1,0 +1,21 @@
+/* ==========================================
+   12. HISTORY LOG STYLES
+   ========================================== */
+.history-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--glass-border);
+    transition: 0.3s;
+}
+.history-present { border-left-color: var(--success); }
+.history-absent { border-left-color: var(--danger); }
+
+.history-info h4 { margin: 0 0 5px 0; font-size: 1.1rem; }
+.history-date { margin: 0; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+
+.history-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
