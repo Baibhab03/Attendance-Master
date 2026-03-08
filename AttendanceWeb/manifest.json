@@ -13,16 +13,16 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "/attendance.html",
+  "start_url": "./attendance.html",
   "background_color": "#0f172a",
   "display": "standalone",
-  "scope": "/",
+  "scope": "./",
   "theme_color": "#00d2ff",
   "shortcuts": [
     {
       "name": "Today's Classes",
       "short_name": "Today",
-      "url": "/attendance.html",
+      "url": "./attendance.html",
       "icons": [{ "src": "https://placehold.co/96x96/00d2ff/ffffff?text=T", "sizes": "96x96" }]
     }
   ]
