@@ -3,12 +3,12 @@
   "name": "Attendance Master: Student Tracker",
   "icons": [
     {
-      "src": "https://placehold.co/192x192/00d2ff/ffffff?text=AM",
+      "src": "icon.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "https://placehold.co/512x512/00d2ff/ffffff?text=Attendance+Master",
+      "src": "icon.png",
       "type": "image/png",
       "sizes": "512x512"
     }
