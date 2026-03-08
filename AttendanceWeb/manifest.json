@@ -25,10 +25,11 @@
       "url": "./attendance.html",
       "icons": [
         {
-          "src": "./icons/icon-192.png",
+          "src": "./Icons/icon-192.png",
           "sizes": "192x192"
         }
       ]
     }
   ]
+
 }
