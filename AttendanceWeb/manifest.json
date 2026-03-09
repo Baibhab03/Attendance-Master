@@ -1,5 +1,5 @@
 {
-  "short_name": "AttenMaster",
+  "short_name": "AttendMaster",
   "name": "Attendance Master: Student Tracker",
   "icons": [
     {
@@ -31,5 +31,4 @@
       ]
     }
   ]
-
 }

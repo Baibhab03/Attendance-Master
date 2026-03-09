@@ -28,7 +28,7 @@ body {
 }
 
 /* ==========================================
-   2. APP VIEWS (ROUTING) & BACKGROUND
+   2. APP VIEWS & BACKGROUND
    ========================================== */
 .bg-shape {
     position: fixed;
@@ -61,7 +61,6 @@ body {
     padding: 20px;
 }
 
-/* View Switching */
 .app-view {
     display: none;
     animation: fadeIn 0.4s ease;
@@ -137,7 +136,7 @@ body {
 }
 
 /* ==========================================
-   4. SIDEBAR DRAWER (Hamburger Menu)
+   4. SIDEBAR DRAWER
    ========================================== */
 .menu-btn {
     font-size: 1.8rem;

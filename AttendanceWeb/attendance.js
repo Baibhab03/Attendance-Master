@@ -39,14 +39,14 @@ const saveToLocal = async () => {
             showToast("Cloud sync failed. Working locally.", "error");
         }
     }
-    
+
     // Local backup so the app works instantly before cloud responds
     localStorage.setItem('edu_subjects', JSON.stringify(subjects));
     localStorage.setItem('edu_timetable', JSON.stringify(timetable));
     localStorage.setItem('edu_history', JSON.stringify(historyLog));
     localStorage.setItem('edu_profile', JSON.stringify(userProfile));
     localStorage.setItem('edu_overrides', JSON.stringify(overrides));
-    
+
     refreshAllUI();
 };
 
@@ -64,7 +64,7 @@ auth.onAuthStateChanged(async (user) => {
                 userProfile = data.userProfile || userProfile;
                 overrides = data.overrides || {};
             }
-        } catch(e) {
+        } catch (e) {
             console.error("Failed to fetch from cloud", e);
         }
         refreshAllUI();
@@ -120,21 +120,21 @@ const closeMenu = document.getElementById('closeMenu');
 const sideNav = document.getElementById('sideNav');
 const navBackdrop = document.getElementById('navBackdrop');
 const toggleSidebar = () => { sideNav.classList.toggle('open'); navBackdrop.classList.toggle('active'); };
-if(menuToggle) menuToggle.onclick = toggleSidebar;
-if(closeMenu) closeMenu.onclick = toggleSidebar;
-if(navBackdrop) navBackdrop.onclick = toggleSidebar;
+if (menuToggle) menuToggle.onclick = toggleSidebar;
+if (closeMenu) closeMenu.onclick = toggleSidebar;
+if (navBackdrop) navBackdrop.onclick = toggleSidebar;
 
 const updateSidebarProfile = () => {
     const nameEl = document.getElementById('profileName');
     const infoEl = document.getElementById('profileInfo');
     const avatarEl = document.getElementById('sidebarAvatar');
-    if(nameEl) nameEl.textContent = userProfile.name || "Student";
-    if(infoEl) infoEl.textContent = `Roll: ${userProfile.roll || "--"} | Sec: ${userProfile.sec || "--"}`;
-    if(avatarEl) avatarEl.src = userProfile.avatar || "https://placehold.co/120x120/00d2ff/ffffff?text=U";
+    if (nameEl) nameEl.textContent = userProfile.name || "Student";
+    if (infoEl) infoEl.textContent = `Roll: ${userProfile.roll || "--"} | Sec: ${userProfile.sec || "--"}`;
+    if (avatarEl) avatarEl.src = userProfile.avatar || "https://placehold.co/120x120/00d2ff/ffffff?text=U";
 };
 
 // ==========================================
-// 3. DASHBOARD LOGIC (Modals & Tabs)
+// 3. DASHBOARD LOGIC
 // ==========================================
 const tabs = document.querySelectorAll('.tab-btn');
 if (tabs.length > 0) {
@@ -144,7 +144,7 @@ if (tabs.length > 0) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             tab.classList.add('active');
             const targetContent = document.getElementById(`tab-${tab.dataset.tab}`);
-            if(targetContent) targetContent.classList.add('active');
+            if (targetContent) targetContent.classList.add('active');
         });
     });
 }
@@ -161,7 +161,7 @@ if (document.getElementById('addSubjectBtn')) {
 }
 
 window.openSubModalGlobal = (isEdit = false, subId = null) => {
-    if(!subModal) return;
+    if (!subModal) return;
     subModal.style.display = 'flex';
     if (isEdit) {
         const sub = subjects.find(s => s.id === subId);
@@ -176,15 +176,15 @@ window.openSubModalGlobal = (isEdit = false, subId = null) => {
 };
 
 const closeSubModal = () => {
-    if(subModal) subModal.style.display = 'none';
+    if (subModal) subModal.style.display = 'none';
     ['subjectName', 'editPresent', 'editTotal', 'subjectTime'].forEach(id => {
-        if(document.getElementById(id)) document.getElementById(id).value = '';
+        if (document.getElementById(id)) document.getElementById(id).value = '';
     });
 };
-if(document.getElementById('closeModal')) document.getElementById('closeModal').onclick = closeSubModal;
-if(document.getElementById('closeModalIcon')) document.getElementById('closeModalIcon').onclick = closeSubModal;
+if (document.getElementById('closeModal')) document.getElementById('closeModal').onclick = closeSubModal;
+if (document.getElementById('closeModalIcon')) document.getElementById('closeModalIcon').onclick = closeSubModal;
 
-if(document.getElementById('saveSubject')) {
+if (document.getElementById('saveSubject')) {
     document.getElementById('saveSubject').onclick = () => {
         const id = document.getElementById('editSubjectId').value;
         const name = document.getElementById('subjectName').value.trim();
@@ -203,58 +203,53 @@ if(document.getElementById('saveSubject')) {
 }
 
 // ==========================================
-// 4. TIMETABLE EXCEPTIONS (Canceled & Extra)
+// 4. DASHBOARD STATS & SUBJECTS
 // ==========================================
-window.cancelTodayClass = (slotId, isExtra = false) => {
-    const todayStr = new Date().toDateString();
-    if(!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [] };
-    
-    if(isExtra) {
-        // If it was an extra class, completely remove it
-        overrides[todayStr].extra = overrides[todayStr].extra.filter(s => s.slotId !== slotId);
-        showToast("Extra class removed.");
-    } else {
-        // Normal class, mark as canceled for today
-        if (!overrides[todayStr].canceled.includes(slotId)) {
-            overrides[todayStr].canceled.push(slotId);
-            showToast("Class canceled for today!");
-        }
-    }
-    saveToLocal();
-};
+const renderDashboard = () => {
+    const statsCont = document.getElementById('subjectsContainer');
+    if (!statsCont) return;
 
-window.openExtraClassModal = () => {
-    if (subjects.length === 0) return alert("Please add a subject first.");
-    const select = document.getElementById('extraSubjectSelect');
-    if(select) {
-        select.innerHTML = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    }
-    if(document.getElementById('extraTimeInput')) document.getElementById('extraTimeInput').value = "10:00";
-    if(document.getElementById('extraClassModal')) document.getElementById('extraClassModal').style.display = 'flex';
-};
+    statsCont.innerHTML = '';
+    let gPres = 0, gTotal = 0;
+    const target = userProfile.targetPct || 75;
+    const targetDecimal = target / 100;
 
-window.closeExtraClassModal = () => {
-    if(document.getElementById('extraClassModal')) document.getElementById('extraClassModal').style.display = 'none';
-};
+    // RENDER SUBJECT STATS (Tab 2)
+    subjects.forEach(sub => {
+        gPres += sub.present; gTotal += sub.total;
+        const pct = sub.total === 0 ? 0 : Math.round((sub.present / sub.total) * 100);
+        let bunkInfo = sub.total === 0 ? { txt: "No classes yet", cls: "safe" } :
+            pct >= target ? { txt: `Can safely miss <b>${Math.floor(sub.present / targetDecimal) - sub.total}</b> classes`, cls: "safe" } :
+                { txt: `Must attend next <b>${Math.ceil((targetDecimal * sub.total - sub.present) / (1 - targetDecimal))}</b> classes`, cls: "danger" };
 
-window.saveExtraClass = () => {
-    const subId = document.getElementById('extraSubjectSelect').value;
-    const time = document.getElementById('extraTimeInput').value;
-    if(!time) return alert("Please specify a time.");
-
-    const todayStr = new Date().toDateString();
-    if(!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [] };
-    
-    overrides[todayStr].extra.push({
-        slotId: 'extra_' + Date.now(),
-        subId: parseInt(subId),
-        time: time,
-        isExtra: true
+        statsCont.innerHTML += `
+            <div class="glass-card subject-row" style="flex-direction: column; align-items: flex-start; gap: 15px;">
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                    <div class="subject-details"><h4>${sub.name}</h4><p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${sub.present} / ${sub.total} Classes</p></div>
+                    <div class="actions" style="align-items: center;">
+                        <span style="font-size:1.3rem; font-weight:700; color:${pct < target && sub.total > 0 ? 'var(--danger)' : 'var(--success)'}; margin-right:10px;">${pct}%</span>
+                        <button class="icon-btn" onclick="openSubModalGlobal(true, ${sub.id})"><i class='bx bx-pencil'></i></button>
+                        <button class="icon-btn delete-btn" onclick="deleteSubject(${sub.id})"><i class='bx bx-trash'></i></button>
+                    </div>
+                </div>
+                <div class="bunk-calc ${bunkInfo.cls}"><i class='bx bx-analyse'></i> ${bunkInfo.txt}</div>
+            </div>`;
     });
-    
-    saveToLocal();
-    closeExtraClassModal();
-    showToast("Extra class added for today!");
+
+    // Update Top Stats UI
+    const gPct = gTotal === 0 ? 0 : Math.round((gPres / gTotal) * 100);
+    if (document.getElementById('overallPct')) {
+        document.getElementById('overallPct').textContent = `${gPct}%`;
+        document.getElementById('overallPct').style.color = (gPct < target && gTotal > 0) ? 'var(--danger)' : 'var(--text)';
+    }
+    if (document.getElementById('overallBar')) {
+        document.getElementById('overallBar').style.width = `${gPct}%`;
+        document.getElementById('overallBar').style.background = (gPct < target && gTotal > 0) ? 'var(--danger)' : 'linear-gradient(90deg, #00d2ff, #3a86ff)';
+    }
+    if (document.getElementById('todayCount')) document.getElementById('todayCount').textContent = subjects.length;
+
+    // Call the Schedule renderer separately
+    renderTodaySchedule();
 };
 
 // ==========================================
@@ -262,22 +257,22 @@ window.saveExtraClass = () => {
 // ==========================================
 window.markAttendance = (id, isPresent) => {
     const sub = subjects.find(s => s.id === id);
-    if (sub) { 
-        sub.total++; if (isPresent) sub.present++; 
+    if (sub) {
+        sub.total++; if (isPresent) sub.present++;
         const now = new Date();
         historyLog.unshift({
             logId: Date.now(), subId: sub.id, subName: sub.name, status: isPresent ? 'Present' : 'Absent',
             date: now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
             time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         });
-        if(historyLog.length > 50) historyLog.pop();
-        saveToLocal(); 
+        if (historyLog.length > 50) historyLog.pop();
+        saveToLocal();
         showToast(`Marked ${isPresent ? 'Present' : 'Absent'} for ${sub.name}`, isPresent ? 'success' : 'error');
     }
 };
 
 window.deleteSubject = (id) => {
-    if(confirm("Delete subject? This removes it from stats, timetables, and history.")) { 
+    if (confirm("Delete subject? This removes it from stats, timetables, and history.")) {
         subjects = subjects.filter(s => s.id !== id);
         for (let day in timetable) timetable[day] = timetable[day].filter(slot => slot.subId !== id);
         historyLog = historyLog.filter(log => log.subId !== id);
@@ -300,134 +295,73 @@ window.deleteHistoryLog = (logId) => {
 };
 
 window.clearAllHistory = () => {
-    if(confirm("Clear all history? Your subject stats will remain untouched.")) {
+    if (confirm("Clear all history? Your subject stats will remain untouched.")) {
         historyLog = []; saveToLocal(); showToast("History cleared", "error");
     }
 };
 
 // ==========================================
-// 6. DASHBOARD & TIMETABLE RENDERERS
+// 6. TIMETABLE, SCHEDULE & EXCEPTIONS
 // ==========================================
-const renderDashboard = () => {
-    const scheduleCont = document.getElementById('scheduleContainer');
-    const statsCont = document.getElementById('subjectsContainer');
-    if(!scheduleCont || !statsCont) return;
 
-    scheduleCont.innerHTML = ''; statsCont.innerHTML = '';
-    let gPres = 0, gTotal = 0;
-    const target = userProfile.targetPct || 75;
-    const targetDecimal = target / 100;
-
-    // RENDER SUBJECT STATS (Tab 2)
-    subjects.forEach(sub => {
-        gPres += sub.present; gTotal += sub.total;
-        const pct = sub.total === 0 ? 0 : Math.round((sub.present / sub.total) * 100);
-        let bunkInfo = sub.total === 0 ? {txt: "No classes yet", cls: "safe"} : 
-                       pct >= target ? {txt: `Can safely miss <b>${Math.floor(sub.present/targetDecimal) - sub.total}</b> classes`, cls: "safe"} :
-                       {txt: `Must attend next <b>${Math.ceil((targetDecimal * sub.total - sub.present) / (1 - targetDecimal))}</b> classes`, cls: "danger"};
-
-        statsCont.innerHTML += `
-            <div class="glass-card subject-row" style="flex-direction: column; align-items: flex-start; gap: 15px;">
-                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <div class="subject-details"><h4>${sub.name}</h4><p style="margin:0; font-size:0.85rem; color:var(--text-muted);">${sub.present} / ${sub.total} Classes</p></div>
-                    <div class="actions" style="align-items: center;">
-                        <span style="font-size:1.3rem; font-weight:700; color:${pct < target && sub.total > 0 ? 'var(--danger)' : 'var(--success)'}; margin-right:10px;">${pct}%</span>
-                        <button class="icon-btn" onclick="openSubModalGlobal(true, ${sub.id})"><i class='bx bx-pencil'></i></button>
-                        <button class="icon-btn delete-btn" onclick="deleteSubject(${sub.id})"><i class='bx bx-trash'></i></button>
-                    </div>
-                </div>
-                <div class="bunk-calc ${bunkInfo.cls}"><i class='bx bx-analyse'></i> ${bunkInfo.txt}</div>
-            </div>`;
-    });
-
-    // Update Top Stats UI
-    const gPct = gTotal === 0 ? 0 : Math.round((gPres / gTotal) * 100);
-    if(document.getElementById('overallPct')) {
-        document.getElementById('overallPct').textContent = `${gPct}%`;
-        document.getElementById('overallPct').style.color = (gPct < target && gTotal > 0) ? 'var(--danger)' : 'var(--text)';
-    }
-    if(document.getElementById('overallBar')) {
-        document.getElementById('overallBar').style.width = `${gPct}%`;
-        document.getElementById('overallBar').style.background = (gPct < target && gTotal > 0) ? 'var(--danger)' : 'linear-gradient(90deg, #00d2ff, #3a86ff)';
-    }
-    if(document.getElementById('todayCount')) document.getElementById('todayCount').textContent = subjects.length;
-
-    // RENDER TODAY'S SCHEDULE WITH EXCEPTIONS (Tab 1)
-    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const actualToday = daysOfWeek[new Date().getDay()];
-    const todayStr = new Date().toDateString();
-    const todayOverrides = overrides[todayStr] || { canceled: [], extra: [] };
-
-    let todaysClasses = [...(timetable[actualToday] || [])];
-    
-    // Combine standard timetable with today's extra classes, then sort by time
-    let allTodaySlots = [...todaysClasses, ...todayOverrides.extra];
-    allTodaySlots.sort((a, b) => a.time.localeCompare(b.time));
-
-    if (actualToday === "Saturday" || actualToday === "Sunday") {
-        if(allTodaySlots.length === 0) {
-            scheduleCont.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px; font-size: 1.1rem;">It's the weekend! 🎉</p>`;
-            return;
-        }
-    }
-
-    if (allTodaySlots.length === 0) {
-        scheduleCont.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);"><p>No classes scheduled for <b>${actualToday}</b>.</p></div>`;
-    } else {
-        if(document.querySelector('.tab-btn[data-tab="today"]')) document.querySelector('.tab-btn[data-tab="today"]').innerHTML = `<i class='bx bx-calendar-check'></i> ${actualToday}'s Classes`;
-
-        scheduleCont.innerHTML = allTodaySlots.map(slot => {
-            if (slot.subId === 'free') return `<div class="glass-card subject-row" style="opacity: 0.7; border: 1px dashed var(--glass-border);"><div class="row-info"><span class="time-tag" style="background: transparent;">${slot.time}</span><div class="subject-details"><h4 style="color: var(--text-muted);">☕ Free Period</h4></div></div></div>`;
-            
-            const sub = subjects.find(s => s.id === slot.subId);
-            if (!sub) return ''; 
-
-            // CANCELED CLASS UI
-            if (todayOverrides.canceled.includes(slot.slotId)) {
-                return `
-                <div class="glass-card subject-row" style="opacity: 0.5; border-color: var(--danger);">
-                    <div class="row-info"><span class="time-tag" style="background: rgba(255,118,117,0.1); color: var(--danger); text-decoration: line-through;">${slot.time}</span>
-                        <div class="subject-details"><h4 style="text-decoration: line-through;">${sub.name}</h4><div class="status-badge danger">Canceled Today</div></div>
-                    </div>
-                </div>`;
-            }
-
-            const pct = sub.total === 0 ? 0 : Math.round((sub.present / sub.total) * 100);
-            const badgeClass = pct < target && sub.total > 0 ? 'danger' : 'safe';
-            
-            // EXTRA CLASS UI
-            const extraTag = slot.isExtra ? `<span style="font-size:0.7rem; background: var(--accent); color:#0f172a; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Extra Class</span>` : '';
-
-            return `
-                <div class="glass-card subject-row" ${slot.isExtra ? 'style="border: 1px solid var(--accent);"' : ''}>
-                    <div class="row-info"><span class="time-tag">${slot.time}</span>
-                        <div class="subject-details"><h4>${sub.name} ${extraTag}</h4><div class="status-badge ${badgeClass}"><i class='bx bx-check-circle'></i> ${pct}%</div></div>
-                    </div>
-                    <div class="actions">
-                        <button class="glass-btn present" onclick="markAttendance(${sub.id}, true)" title="Present"><i class='bx bx-check'></i></button>
-                        <button class="glass-btn absent" onclick="markAttendance(${sub.id}, false)" title="Absent"><i class='bx bx-x'></i></button>
-                        <button class="icon-btn delete-btn" onclick="cancelTodayClass('${slot.slotId}', ${slot.isExtra || false})" title="Cancel Class Today"><i class='bx bx-block'></i></button>
-                    </div>
-                </div>`;
-        }).join('');
-    }
+// --- CORE TIMETABLE ACTIONS ---
+window.removeSlot = (slotId) => {
+    timetable[currentTimetableDay] = timetable[currentTimetableDay].filter(s => s.slotId !== slotId);
+    saveToLocal();
+    showToast("Class removed from timetable", "error");
 };
 
-// ==========================================
-// 7. TIMETABLE PAGE LOGIC
-// ==========================================
+window.cancelTodayClass = (slotId, isExtra = false) => {
+    const todayStr = new Date().toDateString();
+    if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [] };
+
+    if (isExtra) {
+        overrides[todayStr].extra = overrides[todayStr].extra.filter(s => s.slotId !== slotId);
+        showToast("Extra class removed.");
+    } else {
+        if (!overrides[todayStr].canceled.includes(slotId)) {
+            overrides[todayStr].canceled.push(slotId);
+            showToast("Class canceled for today!");
+        }
+    }
+    saveToLocal();
+};
+
+// --- EXTRA CLASS MODAL ---
+window.openExtraClassModal = () => {
+    if (subjects.length === 0) return alert("Please add a subject first.");
+    const select = document.getElementById('extraSubjectSelect');
+    if (select) select.innerHTML = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    if (document.getElementById('extraTimeInput')) document.getElementById('extraTimeInput').value = "";
+    if (document.getElementById('extraClassModal')) document.getElementById('extraClassModal').style.display = 'flex';
+};
+
+window.saveExtraClass = () => {
+    const subId = document.getElementById('extraSubjectSelect').value;
+    const time = document.getElementById('extraTimeInput').value;
+    if (!time) return alert("Please specify a time.");
+    const todayStr = new Date().toDateString();
+    if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [] };
+    overrides[todayStr].extra.push({ slotId: 'extra_' + Date.now(), subId: parseInt(subId), time: time, isExtra: true });
+    saveToLocal();
+    if (document.getElementById('extraClassModal')) document.getElementById('extraClassModal').style.display = 'none';
+    showToast("Extra class added for today!");
+};
+
+// --- TIMETABLE PAGE RENDERER ---
 const renderTimetable = () => {
     const list = document.getElementById('timetableList');
     if (!list) return;
     const daySlots = timetable[currentTimetableDay] || [];
     daySlots.sort((a, b) => a.time.localeCompare(b.time));
 
-    if (daySlots.length === 0) { list.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px;">No classes scheduled for ${currentTimetableDay}.</p>`; return; }
+    if (daySlots.length === 0) {
+        list.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px;">No classes scheduled for ${currentTimetableDay}.</p>`;
+        return;
+    }
 
     list.innerHTML = daySlots.map(slot => {
-        let subName = "Deleted Subject";
-        if (slot.subId === 'free') subName = "☕ Free Period / Break";
-        else { const sub = subjects.find(s => s.id == slot.subId); if(sub) subName = sub.name; }
+        let subName = slot.subId === 'free' ? "☕ Free Period / Break" : (subjects.find(s => s.id == slot.subId)?.name || "Deleted Subject");
         return `
             <div class="glass-card subject-row" ${slot.subId === 'free' ? 'style="border: 1px dashed var(--glass-border); opacity: 0.8;"' : ''}>
                 <div class="row-info"><span class="time-tag">${slot.time}</span><div class="subject-details"><h4>${subName}</h4></div></div>
@@ -436,6 +370,55 @@ const renderTimetable = () => {
     }).join('');
 };
 
+// --- DASHBOARD SCHEDULE RENDERER ---
+const renderTodaySchedule = () => {
+    const scheduleCont = document.getElementById('scheduleContainer');
+    if (!scheduleCont) return;
+
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const actualToday = daysOfWeek[new Date().getDay()];
+    const todayStr = new Date().toDateString();
+    const todayOverrides = overrides[todayStr] || { canceled: [], extra: [] };
+    const target = userProfile.targetPct || 75;
+
+    let allTodaySlots = [...(timetable[actualToday] || []), ...todayOverrides.extra];
+    allTodaySlots.sort((a, b) => a.time.localeCompare(b.time));
+
+    if (allTodaySlots.length === 0) {
+        scheduleCont.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);"><p>No classes scheduled for <b>${actualToday}</b>.</p></div>`;
+        return;
+    }
+
+    if (document.querySelector('.tab-btn[data-tab="today"]')) document.querySelector('.tab-btn[data-tab="today"]').innerHTML = `<i class='bx bx-calendar-check'></i> ${actualToday}'s Classes`;
+
+    scheduleCont.innerHTML = allTodaySlots.map(slot => {
+        if (slot.subId === 'free') return `<div class="glass-card subject-row" style="opacity: 0.7; border: 1px dashed var(--glass-border);"><div class="row-info"><span class="time-tag" style="background: transparent;">${slot.time}</span><div class="subject-details"><h4 style="color: var(--text-muted);">☕ Free Period</h4></div></div></div>`;
+
+        const sub = subjects.find(s => s.id === slot.subId);
+        if (!sub) return '';
+
+        if (todayOverrides.canceled.includes(slot.slotId)) {
+            return `<div class="glass-card subject-row" style="opacity: 0.5; border-color: var(--danger);"><div class="row-info"><span class="time-tag" style="background: rgba(255,118,117,0.1); color: var(--danger); text-decoration: line-through;">${slot.time}</span><div class="subject-details"><h4 style="text-decoration: line-through;">${sub.name}</h4><div class="status-badge danger">Canceled Today</div></div></div></div>`;
+        }
+
+        const pct = sub.total === 0 ? 0 : Math.round((sub.present / sub.total) * 100);
+        const extraTag = slot.isExtra ? `<span style="font-size:0.7rem; background: var(--accent); color:#0f172a; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Extra Class</span>` : '';
+
+        return `
+            <div class="glass-card subject-row" ${slot.isExtra ? 'style="border: 1px solid var(--accent);"' : ''}>
+                <div class="row-info"><span class="time-tag">${slot.time}</span>
+                    <div class="subject-details"><h4>${sub.name} ${extraTag}</h4><div class="status-badge ${pct < target && sub.total > 0 ? 'danger' : 'safe'}"><i class='bx bx-check-circle'></i> ${pct}%</div></div>
+                </div>
+                <div class="actions">
+                    <button class="glass-btn present" onclick="markAttendance(${sub.id}, true)" title="Present"><i class='bx bx-check'></i></button>
+                    <button class="glass-btn absent" onclick="markAttendance(${sub.id}, false)" title="Absent"><i class='bx bx-x'></i></button>
+                    <button class="icon-btn delete-btn" onclick="cancelTodayClass('${slot.slotId}', ${slot.isExtra || false})" title="Cancel Class Today"><i class='bx bx-block'></i></button>
+                </div>
+            </div>`;
+    }).join('');
+};
+
+// --- TIMETABLE EVENT LISTENERS ---
 const dayBtns = document.querySelectorAll('.day-btn');
 if (dayBtns.length > 0) {
     dayBtns.forEach(btn => {
@@ -443,41 +426,40 @@ if (dayBtns.length > 0) {
             dayBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             currentTimetableDay = e.target.getAttribute('data-day');
-            if(document.getElementById('currentDayText')) document.getElementById('currentDayText').textContent = currentTimetableDay;
+            if (document.getElementById('currentDayText')) document.getElementById('currentDayText').textContent = currentTimetableDay;
             renderTimetable();
         });
     });
 }
 
-window.removeSlot = (slotId) => { timetable[currentTimetableDay] = timetable[currentTimetableDay].filter(s => s.slotId !== slotId); saveToLocal(); showToast("Class removed from timetable", "error"); };
-
 if (document.getElementById('addTimetableSlotBtn') && document.getElementById('slotModalBackdrop')) {
     document.getElementById('addTimetableSlotBtn').onclick = () => {
         if (subjects.length === 0) return alert("Please create a Subject in the Dashboard first!");
         const slotSelect = document.getElementById('slotSubjectSelect');
-        if(slotSelect) {
+        if (slotSelect) {
             let optionsHTML = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             optionsHTML += `<option value="free">☕ Free Period / Break</option>`;
             slotSelect.innerHTML = optionsHTML;
         }
-        if(document.getElementById('slotTimeInput')) document.getElementById('slotTimeInput').value = "09:00";
+        if (document.getElementById('slotTimeInput')) document.getElementById('slotTimeInput').value = "";
         document.getElementById('slotModalBackdrop').style.display = 'flex';
     };
-    if(document.getElementById('closeSlotModal')) document.getElementById('closeSlotModal').onclick = () => document.getElementById('slotModalBackdrop').style.display = 'none';
-    if(document.getElementById('saveSlotBtn')) {
+    if (document.getElementById('closeSlotModal')) document.getElementById('closeSlotModal').onclick = () => document.getElementById('slotModalBackdrop').style.display = 'none';
+    if (document.getElementById('saveSlotBtn')) {
         document.getElementById('saveSlotBtn').onclick = () => {
             const subId = document.getElementById('slotSubjectSelect').value;
             const time = document.getElementById('slotTimeInput').value;
             if (!time) return alert("Please specify a time.");
             timetable[currentTimetableDay].push({ slotId: 'slot_' + Date.now(), subId: subId === 'free' ? 'free' : parseInt(subId), time: time });
-            saveToLocal(); document.getElementById('slotModalBackdrop').style.display = 'none';
+            saveToLocal();
+            document.getElementById('slotModalBackdrop').style.display = 'none';
             showToast(subId === 'free' ? "Free period added!" : "Class added to timetable!");
         };
     }
 }
 
 // ==========================================
-// 8. HISTORY & NOTIFICATIONS PAGE LOGIC
+// 7. HISTORY & NOTIFICATIONS PAGE LOGIC
 // ==========================================
 const renderHistory = () => {
     const container = document.getElementById('historyContainer');
@@ -548,36 +530,36 @@ const renderNotifications = () => {
 };
 
 // ==========================================
-// 9. ACCOUNT & SETTINGS PAGE LOGIC
+// 8. ACCOUNT & SETTINGS PAGE LOGIC
 // ==========================================
 const renderAccount = () => {
     const nameInput = document.getElementById('profileInputName');
-    if (!nameInput) return; 
+    if (!nameInput) return;
 
     // --- NEW USER ONBOARDING CHECK ---
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('newuser') === 'true') {
         showToast("Welcome! Please complete your profile to get started.", "info");
         const headerTitle = document.querySelector('.header h1');
-        if(headerTitle) headerTitle.innerHTML = "Complete Your <span>Profile</span>";
+        if (headerTitle) headerTitle.innerHTML = "Complete Your <span>Profile</span>";
     }
-    
+
     nameInput.value = userProfile.name || "";
     document.getElementById('profileInputRoll').value = userProfile.roll || "";
     const regInput = document.getElementById('profileInputRegNo');
-    if(regInput) regInput.value = userProfile.regNo || "";
+    if (regInput) regInput.value = userProfile.regNo || "";
     document.getElementById('profileInputSec').value = userProfile.sec || "";
-    if(document.getElementById('profileInputCourse')) document.getElementById('profileInputCourse').value = userProfile.course || "";
-    if(document.getElementById('profileInputSem')) document.getElementById('profileInputSem').value = userProfile.sem || "1";
-    if(document.getElementById('profileInputEmail')) document.getElementById('profileInputEmail').value = userProfile.email || "";
-    
+    if (document.getElementById('profileInputCourse')) document.getElementById('profileInputCourse').value = userProfile.course || "";
+    if (document.getElementById('profileInputSem')) document.getElementById('profileInputSem').value = userProfile.sem || "1";
+    if (document.getElementById('profileInputEmail')) document.getElementById('profileInputEmail').value = userProfile.email || "";
+
     document.getElementById('mainAvatarDisplay').src = userProfile.avatar || "https://placehold.co/120x120/00d2ff/ffffff?text=U";
     updateIDCardRealtime();
 };
 
 window.updateIDCardRealtime = () => {
-    if(!document.getElementById('idCardName')) return;
-    
+    if (!document.getElementById('idCardName')) return;
+
     const n = document.getElementById('profileInputName').value || "Student Name";
     const c = document.getElementById('profileInputCourse').value || "Course";
     const s = document.getElementById('profileInputSem').value || "1";
@@ -591,19 +573,19 @@ window.updateIDCardRealtime = () => {
     document.getElementById('idCardRoll').textContent = r;
     document.getElementById('idCardSec').textContent = sec;
     const idRegEl = document.getElementById('idCardRegNo');
-    if(idRegEl) idRegEl.textContent = `Reg No: ${reg}`;
+    if (idRegEl) idRegEl.textContent = `Reg No: ${reg}`;
 };
 
 const avatarInput = document.getElementById('avatarUpload');
 if (avatarInput) {
-    avatarInput.addEventListener('change', function() {
+    avatarInput.addEventListener('change', function () {
         if (this.files && this.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => { 
-                userProfile.avatar = e.target.result; 
+            reader.onload = e => {
+                userProfile.avatar = e.target.result;
                 saveToLocal();
                 document.getElementById('mainAvatarDisplay').src = userProfile.avatar;
-                if(document.getElementById('sidebarAvatar')) document.getElementById('sidebarAvatar').src = userProfile.avatar;
+                if (document.getElementById('sidebarAvatar')) document.getElementById('sidebarAvatar').src = userProfile.avatar;
                 showToast("ID Photo Updated!");
             };
             reader.readAsDataURL(this.files[0]);
@@ -616,11 +598,11 @@ window.saveProfile = () => {
     userProfile.roll = document.getElementById('profileInputRoll').value.trim();
     userProfile.sec = document.getElementById('profileInputSec').value.trim();
     const regInput = document.getElementById('profileInputRegNo');
-    if(regInput) userProfile.regNo = regInput.value.trim();
-    if(document.getElementById('profileInputCourse')) userProfile.course = document.getElementById('profileInputCourse').value.trim();
-    if(document.getElementById('profileInputSem')) userProfile.sem = document.getElementById('profileInputSem').value;
-    if(document.getElementById('profileInputEmail')) userProfile.email = document.getElementById('profileInputEmail').value;
-    
+    if (regInput) userProfile.regNo = regInput.value.trim();
+    if (document.getElementById('profileInputCourse')) userProfile.course = document.getElementById('profileInputCourse').value.trim();
+    if (document.getElementById('profileInputSem')) userProfile.sem = document.getElementById('profileInputSem').value;
+    if (document.getElementById('profileInputEmail')) userProfile.email = document.getElementById('profileInputEmail').value;
+
     saveToLocal();
     updateSidebarProfile();
     showToast("Profile Updated Successfully!");
@@ -664,12 +646,12 @@ window.exportToCSV = () => {
 };
 
 window.startNewSemester = () => {
-    if(confirm("Start a new semester? This sets all attendance to 0 but keeps your Subjects and Timetable.")) {
+    if (confirm("Start a new semester? This sets all attendance to 0 but keeps your Subjects and Timetable.")) {
         subjects.forEach(sub => { sub.present = 0; sub.total = 0; });
         historyLog = [];
-        if(userProfile.sem) {
+        if (userProfile.sem) {
             let nextSem = parseInt(userProfile.sem) + 1;
-            if(nextSem <= 8) userProfile.sem = nextSem.toString();
+            if (nextSem <= 8) userProfile.sem = nextSem.toString();
         }
         saveToLocal();
         showToast("New Semester Started! Good luck!");
@@ -677,9 +659,9 @@ window.startNewSemester = () => {
 };
 
 window.hardResetApp = () => {
-    if(confirm("DANGER: Are you absolutely sure? This deletes ALL subjects and data!")) {
+    if (confirm("DANGER: Are you absolutely sure? This deletes ALL subjects and data!")) {
         const user = auth.currentUser;
-        if(user) {
+        if (user) {
             // Delete from cloud
             db.collection("users").doc(user.uid).delete().then(() => {
                 localStorage.clear();
@@ -696,12 +678,12 @@ window.hardResetApp = () => {
 };
 
 // ==========================================
-// 10. INITIAL BOOT SEQUENCE
+// 9. INITIAL BOOT SEQUENCE
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     // Attempt to load from LocalStorage immediately so UI doesn't blink while waiting for cloud
     let localProfile = localStorage.getItem('edu_profile');
-    if(localProfile) userProfile = JSON.parse(localProfile);
-    
+    if (localProfile) userProfile = JSON.parse(localProfile);
+
     refreshAllUI();
 });

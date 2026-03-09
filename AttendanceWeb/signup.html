@@ -7,6 +7,7 @@
     <title>Sign Up - Attendance Master</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <link rel="manifest" href="manifest.json">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="stylesignup.css">
@@ -33,7 +34,7 @@
 
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="email" name="email" placeholder="College Email" required />
+                    <input type="email" id="email" name="email" placeholder="Email" required />
                 </div>
 
                 <div class="input-group">
@@ -113,7 +114,7 @@
                 const confirmPassword = confirmPasswordInput.value;
 
                 if (!fullName || !email || !roll || !password || !confirmPassword) return showError('Please fill out all fields.');
-                if (password.length < 6) return showError('Password must be at least 6 characters long.');
+                if (password.length < 8) return showError('Password must be at least 8 characters long.');
                 if (password !== confirmPassword) return showError('Passwords do not match.');
 
                 try {
@@ -124,7 +125,7 @@
                     // 2. Create User Profile in Firestore Database
                     await db.collection("users").doc(user.uid).set({
                         userProfile: {
-                            name: fullName, roll: roll, sec: "A", course: "", sem: "1", regNo: "", targetPct: 75, avatar: "https://placehold.co/120x120/00d2ff/ffffff?text=U", email: email
+                            name: fullName, roll: roll, sec: "", course: "", sem: "", regNo: "", targetPct: 75, avatar: "https://placehold.co/120x120/00d2ff/ffffff?text=U", email: email
                         },
                         subjects: [],
                         timetable: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: []},

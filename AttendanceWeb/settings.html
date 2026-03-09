@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="manifest" href="manifest.json">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -56,9 +57,7 @@
         <div class="card-list">
             <div class="glass-card">
                 <h3 class="form-section-title text-accent"><i class='bx bx-target-lock'></i> Attendance Goal</h3>
-                <p class="settings-desc">Adjust your target percentage. The bunk calculator will automatically rewrite
-                    its math based on this goal.</p>
-
+                <p class="settings-desc">Adjust your target percentage. The bunk calculator will automatically rewrite its math based on this goal.</p>
                 <div class="slider-container">
                     <span class="slider-label">Target %</span>
                     <span id="targetDisplay" class="slider-value">75%</span>
@@ -83,26 +82,20 @@
 
             <div class="glass-card">
                 <h3 class="form-section-title text-success"><i class='bx bx-export'></i> Export Data</h3>
-                <p class="settings-desc">Download your entire attendance history as a spreadsheet to share with
-                    professors or parents.</p>
-                <button class="glass-btn btn-success" onclick="exportToCSV()"><i class='bx bxs-file-export'></i>
-                    Download CSV Report</button>
+                <p class="settings-desc">Download your entire attendance history as a spreadsheet to share with professors or parents.</p>
+                <button class="glass-btn btn-success" onclick="exportToCSV()"><i class='bx bxs-file-export'></i>Download CSV Report</button>
             </div>
 
             <div class="glass-card warning-card">
                 <h3 class="form-section-title text-warning"><i class='bx bx-refresh'></i> Semester Management</h3>
-                <p class="settings-desc">Starting a new semester? This resets all your Present/Absent counts to zero,
-                    but <b>keeps</b> your Subjects and Timetable intact.</p>
-                <button class="glass-btn btn-warning" onclick="startNewSemester()"><i class='bx bx-calendar-star'></i>
-                    Start New Semester</button>
+                <p class="settings-desc">Starting a new semester? This resets all your Present/Absent counts to zero,but <b>keeps</b> your Subjects and Timetable intact.</p>
+                <button class="glass-btn btn-warning" onclick="startNewSemester()"><i class='bx bx-calendar-star'></i>Start New Semester</button>
             </div>
 
             <div class="glass-card danger-card">
                 <h3 class="form-section-title text-danger"><i class='bx bx-error-alt'></i> Danger Zone</h3>
-                <p class="settings-desc">Factory resetting will permanently delete ALL Subjects, Timetables, and History
-                    data.</p>
-                <button class="glass-btn absent full-width" onclick="hardResetApp()"><i class='bx bx-trash'></i> Factory
-                    Reset App Data</button>
+                <p class="settings-desc">Factory resetting will permanently delete ALL Subjects, Timetables, and History data.</p>
+                <button class="glass-btn absent full-width" onclick="hardResetApp()"><i class='bx bx-trash'></i> Factory Reset App Data</button>
             </div>
         </div>
     </div>

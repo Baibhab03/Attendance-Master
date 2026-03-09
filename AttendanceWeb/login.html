@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Attendance Master</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -29,7 +31,7 @@
 
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="loginEmail" name="email" placeholder="College Email" required />
+                    <input type="email" id="loginEmail" name="email" placeholder="Email" required />
                 </div>
 
                 <div class="input-group">
@@ -43,16 +45,12 @@
                     <label
                         style="color: var(--text-secondary); display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" id="rememberMe"
-                            style="accent-color: var(--primary-accent); cursor: pointer;">
-                        Remember me
+                            style="accent-color: var(--primary-accent); cursor: pointer;"> Remember me
                     </label>
-                    <a href="#" style="color: var(--primary-accent); text-decoration: none; font-weight: 500;">Forgot
-                        Password?</a>
+                    <a href="#" style="color: var(--primary-accent); text-decoration: none; font-weight: 500;">Forgot Password?</a>
                 </div>
-
                 <p class="error-message" id="loginError"></p>
                 <button type="submit" class="signup-btn">Login to Dashboard</button>
-
                 <p class="login-link">Don't have an account? <a href="signup.html">Sign Up Here</a></p>
             </form>
         </div>
@@ -102,7 +100,6 @@
                 if (!email || !password) return showError('Please enter both email and password.');
 
                 try {
-                    // Log in with Firebase
                     await auth.signInWithEmailAndPassword(email, password);
                     window.location.href = "attendance.html";
                 } catch (error) {

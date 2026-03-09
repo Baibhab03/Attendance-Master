@@ -29,7 +29,6 @@ body {
     padding: 2rem 1rem;
 }
 
-/* Background floating shapes matching Attendance Master */
 .background-overlay {
     position: fixed;
     top: 0;
@@ -59,7 +58,6 @@ body {
 .signup-container {
     width: 100%;
     max-width: 450px;
-    /* Slimmer for a single column */
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
