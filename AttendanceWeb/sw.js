@@ -1,4 +1,4 @@
-const CACHE_NAME = 'attendance-master-v1';
+const CACHE_NAME = 'attendance-master-v1.3.0.7';
 
 // List of files to save for offline use
 const ASSETS_TO_CACHE = [
@@ -63,4 +63,5 @@ self.addEventListener('fetch', event => {
             return fetch(event.request);
         })
     );
+
 });
