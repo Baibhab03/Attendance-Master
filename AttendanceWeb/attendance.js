@@ -11,10 +11,7 @@ const firebaseConfig = {
     measurementId: "G-NFH4R271VE"
 };
 
-// Initialize Firebase (Check if already initialized to prevent errors)
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -23,7 +20,7 @@ let subjects = [];
 let timetable = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [] };
 let historyLog = [];
 let userProfile = { name: "", roll: "", sec: "", course: "", sem: "", regNo: "", targetPct: 75, avatar: "https://placehold.co/120x120/00d2ff/ffffff?text=U" };
-let overrides = {}; // Tracks specific day cancellations and extra classes
+let overrides = {}; 
 let currentTimetableDay = "Monday";
 
 // Save to Cloud & Local Backup
@@ -40,7 +37,6 @@ const saveToLocal = async () => {
         }
     }
 
-    // Local backup so the app works instantly before cloud responds
     localStorage.setItem('edu_subjects', JSON.stringify(subjects));
     localStorage.setItem('edu_timetable', JSON.stringify(timetable));
     localStorage.setItem('edu_history', JSON.stringify(historyLog));
@@ -53,7 +49,6 @@ const saveToLocal = async () => {
 // Listen for Login/Logout
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        // Fetch User Data from Cloud
         try {
             const doc = await db.collection("users").doc(user.uid).get();
             if (doc.exists) {
@@ -69,14 +64,12 @@ auth.onAuthStateChanged(async (user) => {
         }
         refreshAllUI();
     } else {
-        // Protect pages: if not logged in, boot them to login.html
         if (!window.location.pathname.includes("login.html") && !window.location.pathname.includes("signup.html")) {
             window.location.href = "login.html";
         }
     }
 });
 
-// Trigger updates on whatever page the user is currently looking at
 const refreshAllUI = () => {
     updateSidebarProfile();
     if (document.getElementById('scheduleContainer')) renderDashboard();
@@ -89,7 +82,7 @@ const refreshAllUI = () => {
 
 window.handleLogout = () => {
     auth.signOut().then(() => {
-        localStorage.clear(); // Wipe local data for privacy
+        localStorage.clear(); 
         window.location.href = "login.html";
     });
 };
@@ -125,13 +118,27 @@ if (closeMenu) closeMenu.onclick = toggleSidebar;
 if (navBackdrop) navBackdrop.onclick = toggleSidebar;
 
 const updateSidebarProfile = () => {
+    // Generate letter avatar if the user hasn't uploaded a custom photo
+    if (!userProfile.avatar || userProfile.avatar.includes("placehold.co") || !userProfile.avatar.startsWith("data:")) {
+        const firstLetter = (userProfile.name ? userProfile.name.charAt(0).toUpperCase() : "U");
+        userProfile.avatar = `https://placehold.co/120x120/00d2ff/ffffff?text=${firstLetter}`;
+    }
+
+    // Update Sidebar
     const nameEl = document.getElementById('profileName');
     const infoEl = document.getElementById('profileInfo');
     const avatarEl = document.getElementById('sidebarAvatar');
     if (nameEl) nameEl.textContent = userProfile.name || "Student";
     if (infoEl) infoEl.textContent = `Roll: ${userProfile.roll || "--"} | Sec: ${userProfile.sec || "--"}`;
-    if (avatarEl) avatarEl.src = userProfile.avatar || "https://placehold.co/120x120/00d2ff/ffffff?text=U";
+    if (avatarEl) avatarEl.src = userProfile.avatar;
+
+    // Force Account Page Avatar to sync perfectly with Sidebar!
+    const mainAvatar = document.getElementById('mainAvatarDisplay');
+    if (mainAvatar && !userProfile.avatar.startsWith("data:")) {
+        mainAvatar.src = userProfile.avatar;
+    }
 };
+
 
 // ==========================================
 // 3. DASHBOARD LOGIC
@@ -149,7 +156,6 @@ if (tabs.length > 0) {
     });
 }
 
-// Subject Modal
 const subModal = document.getElementById('modalBackdrop');
 if (document.getElementById('addSubjectBtn')) {
     document.getElementById('addSubjectBtn').onclick = () => {
@@ -214,7 +220,6 @@ const renderDashboard = () => {
     const target = userProfile.targetPct || 75;
     const targetDecimal = target / 100;
 
-    // RENDER SUBJECT STATS (Tab 2)
     subjects.forEach(sub => {
         gPres += sub.present; gTotal += sub.total;
         const pct = sub.total === 0 ? 0 : Math.round((sub.present / sub.total) * 100);
@@ -236,7 +241,6 @@ const renderDashboard = () => {
             </div>`;
     });
 
-    // Update Top Stats UI
     const gPct = gTotal === 0 ? 0 : Math.round((gPres / gTotal) * 100);
     if (document.getElementById('overallPct')) {
         document.getElementById('overallPct').textContent = `${gPct}%`;
@@ -248,7 +252,6 @@ const renderDashboard = () => {
     }
     if (document.getElementById('todayCount')) document.getElementById('todayCount').textContent = subjects.length;
 
-    // Call the Schedule renderer separately
     renderTodaySchedule();
 };
 
@@ -285,12 +288,16 @@ window.deleteHistoryLog = (logId) => {
     if (logIndex !== -1) {
         const log = historyLog[logIndex];
         const sub = subjects.find(s => s.id === log.subId);
-        if (sub) {
+        
+        // ONLY affect stats if it was Present or Absent (Canceled doesn't affect stats)
+        if (sub && log.status !== 'Canceled') {
             sub.total = Math.max(0, sub.total - 1);
             if (log.status === 'Present') sub.present = Math.max(0, sub.present - 1);
         }
+        
         historyLog.splice(logIndex, 1);
-        saveToLocal(); showToast("Action undone successfully!");
+        saveToLocal(); 
+        showToast("Action undone successfully!");
     }
 };
 
@@ -303,17 +310,17 @@ window.clearAllHistory = () => {
 // ==========================================
 // 6. TIMETABLE, SCHEDULE & EXCEPTIONS
 // ==========================================
-
-// --- CORE TIMETABLE ACTIONS ---
 window.removeSlot = (slotId) => {
     timetable[currentTimetableDay] = timetable[currentTimetableDay].filter(s => s.slotId !== slotId);
     saveToLocal();
     showToast("Class removed from timetable", "error");
 };
 
-window.cancelTodayClass = (slotId, isExtra = false) => {
+window.cancelTodayClass = (slotId, subId, isExtra = false) => {
     const todayStr = new Date().toDateString();
     if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [] };
+
+    const sub = subjects.find(s => s.id === subId);
 
     if (isExtra) {
         overrides[todayStr].extra = overrides[todayStr].extra.filter(s => s.slotId !== slotId);
@@ -321,13 +328,23 @@ window.cancelTodayClass = (slotId, isExtra = false) => {
     } else {
         if (!overrides[todayStr].canceled.includes(slotId)) {
             overrides[todayStr].canceled.push(slotId);
+            
+            // --- NEW: LOG TO HISTORY ---
+            if (sub) {
+                const now = new Date();
+                historyLog.unshift({
+                    logId: Date.now(), subId: sub.id, subName: sub.name, status: 'Canceled',
+                    date: now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                });
+                if (historyLog.length > 50) historyLog.pop();
+            }
             showToast("Class canceled for today!");
         }
     }
     saveToLocal();
 };
 
-// --- EXTRA CLASS MODAL ---
 window.openExtraClassModal = () => {
     if (subjects.length === 0) return alert("Please add a subject first.");
     const select = document.getElementById('extraSubjectSelect');
@@ -348,7 +365,6 @@ window.saveExtraClass = () => {
     showToast("Extra class added for today!");
 };
 
-// --- TIMETABLE PAGE RENDERER ---
 const renderTimetable = () => {
     const list = document.getElementById('timetableList');
     if (!list) return;
@@ -370,7 +386,6 @@ const renderTimetable = () => {
     }).join('');
 };
 
-// --- DASHBOARD SCHEDULE RENDERER ---
 const renderTodaySchedule = () => {
     const scheduleCont = document.getElementById('scheduleContainer');
     if (!scheduleCont) return;
@@ -404,21 +419,21 @@ const renderTodaySchedule = () => {
         const pct = sub.total === 0 ? 0 : Math.round((sub.present / sub.total) * 100);
         const extraTag = slot.isExtra ? `<span style="font-size:0.7rem; background: var(--accent); color:#0f172a; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Extra Class</span>` : '';
 
+        // REPLACED ICONS WITH TEXT BUTTONS HERE:
         return `
             <div class="glass-card subject-row" ${slot.isExtra ? 'style="border: 1px solid var(--accent);"' : ''}>
                 <div class="row-info"><span class="time-tag">${slot.time}</span>
                     <div class="subject-details"><h4>${sub.name} ${extraTag}</h4><div class="status-badge ${pct < target && sub.total > 0 ? 'danger' : 'safe'}"><i class='bx bx-check-circle'></i> ${pct}%</div></div>
                 </div>
-                <div class="actions">
-                    <button class="glass-btn present" onclick="markAttendance(${sub.id}, true)" title="Present"><i class='bx bx-check'></i></button>
-                    <button class="glass-btn absent" onclick="markAttendance(${sub.id}, false)" title="Absent"><i class='bx bx-x'></i></button>
-                    <button class="icon-btn delete-btn" onclick="cancelTodayClass('${slot.slotId}', ${slot.isExtra || false})" title="Cancel Class Today"><i class='bx bx-block'></i></button>
+                <div class="actions" style="gap: 8px;">
+                    <button class="glass-btn present text-btn" onclick="markAttendance(${sub.id}, true)">Present</button>
+                    <button class="glass-btn absent text-btn" onclick="markAttendance(${sub.id}, false)">Absent</button>
+                    <button class="glass-btn delete-btn text-btn" style="border-color: var(--danger); color: var(--danger);" onclick="cancelTodayClass('${slot.slotId}', ${sub.id}, ${slot.isExtra || false})">Canceled</button>
                 </div>
             </div>`;
     }).join('');
 };
 
-// --- TIMETABLE EVENT LISTENERS ---
 const dayBtns = document.querySelectorAll('.day-btn');
 if (dayBtns.length > 0) {
     dayBtns.forEach(btn => {
@@ -467,16 +482,28 @@ const renderHistory = () => {
     if (historyLog.length === 0) { container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px;">No activity logged yet.</p>`; return; }
 
     container.innerHTML = historyLog.map(log => {
-        const bc = log.status === 'Present' ? 'safe' : 'danger';
-        const brc = log.status === 'Present' ? 'history-present' : 'history-absent';
+        // Determine styling based on status
+        let badgeClass = 'safe';
+        let borderColor = 'var(--success)';
+        let textStyle = '';
+
+        if (log.status === 'Absent') {
+            badgeClass = 'danger';
+            borderColor = 'var(--danger)';
+        } else if (log.status === 'Canceled') {
+            badgeClass = ''; // Custom inline style for canceled
+            borderColor = 'var(--text-muted)';
+            textStyle = 'text-decoration: line-through; opacity: 0.7;';
+        }
+
         return `
-            <div class="glass-card history-card ${brc}" style="padding: 15px; border-left: 4px solid ${log.status === 'Present' ? 'var(--success)' : 'var(--danger)'}; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div class="glass-card history-card" style="padding: 15px; border-left: 4px solid ${borderColor}; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <div class="history-info">
-                    <h4 style="margin: 0 0 5px 0; font-size: 1.1rem;">${log.subName}</h4>
+                    <h4 style="margin: 0 0 5px 0; font-size: 1.1rem; ${textStyle}">${log.subName}</h4>
                     <p class="history-date" style="margin: 0; font-size: 0.85rem; color: var(--text-muted);"><i class='bx bx-time-five'></i> ${log.date} at ${log.time}</p>
                 </div>
                 <div class="history-actions" style="display:flex; align-items:center; gap: 15px;">
-                    <div class="status-badge ${bc}">${log.status}</div>
+                    <div class="status-badge ${badgeClass}" style="${log.status === 'Canceled' ? 'background: rgba(255,255,255,0.1); color: var(--text-muted);' : ''}">${log.status}</div>
                     <button class="icon-btn delete-btn" onclick="deleteHistoryLog(${log.logId})" title="Undo/Delete Log"><i class='bx bx-undo'></i></button>
                 </div>
             </div>`;
@@ -534,32 +561,62 @@ const renderNotifications = () => {
 // ==========================================
 const renderAccount = () => {
     const nameInput = document.getElementById('profileInputName');
-    if (!nameInput) return;
+    const emailInput = document.getElementById('profileInputEmail');
+    const regInput = document.getElementById('profileInputRegNo');
+    const rollInput = document.getElementById('profileInputRoll');
 
-    // --- NEW USER ONBOARDING CHECK ---
+    if (!nameInput) return; 
+
+    const user = firebase.auth().currentUser;
+
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('newuser') === 'true') {
         showToast("Welcome! Please complete your profile to get started.", "info");
         const headerTitle = document.querySelector('.header h1');
-        if (headerTitle) headerTitle.innerHTML = "Complete Your <span>Profile</span>";
+        if(headerTitle) headerTitle.innerHTML = "Complete Your <span>Profile</span>";
+    }
+    
+    // Auto-render Data
+    nameInput.value = userProfile.name || "";
+    if (emailInput) {
+        emailInput.value = userProfile.email || (user ? user.email : "");
+        emailInput.setAttribute('readonly', true);
+        emailInput.style.opacity = "0.7";
+        emailInput.style.cursor = "not-allowed";
     }
 
-    nameInput.value = userProfile.name || "";
-    document.getElementById('profileInputRoll').value = userProfile.roll || "";
-    const regInput = document.getElementById('profileInputRegNo');
-    if (regInput) regInput.value = userProfile.regNo || "";
-    document.getElementById('profileInputSec').value = userProfile.sec || "";
-    if (document.getElementById('profileInputCourse')) document.getElementById('profileInputCourse').value = userProfile.course || "";
-    if (document.getElementById('profileInputSem')) document.getElementById('profileInputSem').value = userProfile.sem || "1";
-    if (document.getElementById('profileInputEmail')) document.getElementById('profileInputEmail').value = userProfile.email || "";
+    // Reg No and Roll Auto-Sync logic
+    if(regInput) {
+        regInput.value = (userProfile.regNo || "").toUpperCase();
+        
+        // Auto-extract Roll No if it exists in Reg No but isn't saved yet
+        if (!userProfile.roll && regInput.value.length >= 5) {
+            userProfile.roll = regInput.value.slice(-5);
+        }
 
+        // Live typing logic: Forces uppercase and auto-fills Roll Number
+        regInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+            if (rollInput) {
+                rollInput.value = e.target.value.length >= 5 ? e.target.value.slice(-5) : e.target.value;
+            }
+        });
+    }
+
+    if(rollInput) rollInput.value = userProfile.roll || "";
+    
+    document.getElementById('profileInputSec').value = userProfile.sec || "";
+    if(document.getElementById('profileInputCourse')) document.getElementById('profileInputCourse').value = userProfile.course || "";
+    if(document.getElementById('profileInputSem')) document.getElementById('profileInputSem').value = userProfile.sem || "1";
+    
+    // Initial avatar load
     document.getElementById('mainAvatarDisplay').src = userProfile.avatar || "https://placehold.co/120x120/00d2ff/ffffff?text=U";
     updateIDCardRealtime();
 };
 
 window.updateIDCardRealtime = () => {
-    if (!document.getElementById('idCardName')) return;
-
+    if(!document.getElementById('idCardName')) return;
+    
     const n = document.getElementById('profileInputName').value || "Student Name";
     const c = document.getElementById('profileInputCourse').value || "Course";
     const s = document.getElementById('profileInputSem').value || "1";
@@ -573,19 +630,24 @@ window.updateIDCardRealtime = () => {
     document.getElementById('idCardRoll').textContent = r;
     document.getElementById('idCardSec').textContent = sec;
     const idRegEl = document.getElementById('idCardRegNo');
-    if (idRegEl) idRegEl.textContent = `Reg No: ${reg}`;
+    if(idRegEl) idRegEl.textContent = `Reg No: ${reg}`;
+
+    // NEW: Live-update the avatar letter as they type their name!
+    userProfile.name = n !== "Student Name" ? n : ""; 
+    updateSidebarProfile();
 };
 
+// Avatar Upload Logic
 const avatarInput = document.getElementById('avatarUpload');
 if (avatarInput) {
-    avatarInput.addEventListener('change', function () {
+    avatarInput.addEventListener('change', function() {
         if (this.files && this.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => {
-                userProfile.avatar = e.target.result;
+            reader.onload = e => { 
+                userProfile.avatar = e.target.result; 
                 saveToLocal();
                 document.getElementById('mainAvatarDisplay').src = userProfile.avatar;
-                if (document.getElementById('sidebarAvatar')) document.getElementById('sidebarAvatar').src = userProfile.avatar;
+                if(document.getElementById('sidebarAvatar')) document.getElementById('sidebarAvatar').src = userProfile.avatar;
                 showToast("ID Photo Updated!");
             };
             reader.readAsDataURL(this.files[0]);
@@ -593,29 +655,44 @@ if (avatarInput) {
     });
 }
 
+// Save Profile Logic
 window.saveProfile = () => {
     userProfile.name = document.getElementById('profileInputName').value.trim();
-    userProfile.roll = document.getElementById('profileInputRoll').value.trim();
-    userProfile.sec = document.getElementById('profileInputSec').value.trim();
+    
     const regInput = document.getElementById('profileInputRegNo');
-    if (regInput) userProfile.regNo = regInput.value.trim();
-    if (document.getElementById('profileInputCourse')) userProfile.course = document.getElementById('profileInputCourse').value.trim();
-    if (document.getElementById('profileInputSem')) userProfile.sem = document.getElementById('profileInputSem').value;
-    if (document.getElementById('profileInputEmail')) userProfile.email = document.getElementById('profileInputEmail').value;
+    if(regInput) userProfile.regNo = regInput.value.trim().toUpperCase();
 
-    saveToLocal();
+    const rollInput = document.getElementById('profileInputRoll');
+    if(rollInput) {
+        userProfile.roll = rollInput.value.trim();
+    } else if (userProfile.regNo.length >= 5) {
+        userProfile.roll = userProfile.regNo.slice(-5);
+    }
+
+    userProfile.sec = document.getElementById('profileInputSec').value.trim();
+    
+    const emailInput = document.getElementById('profileInputEmail');
+    if(emailInput) userProfile.email = emailInput.value;
+    
+    if(document.getElementById('profileInputCourse')) 
+        userProfile.course = document.getElementById('profileInputCourse').value.trim();
+    
+    if(document.getElementById('profileInputSem')) 
+        userProfile.sem = document.getElementById('profileInputSem').value;
+    
+    saveToLocal(); 
     updateSidebarProfile();
     showToast("Profile Updated Successfully!");
 
-    // --- REDIRECT IF NEW USER ---
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = newSearchParams(window.location.search);
     if (urlParams.get('newuser') === 'true') {
         setTimeout(() => {
             window.location.href = "attendance.html";
-        }, 1500); // Gives time for the toast message to appear before redirecting
+        }, 1500);
     }
 };
 
+// Target Attendance Slider Logic
 const targetSlider = document.getElementById('targetSlider');
 if (targetSlider) {
     targetSlider.value = userProfile.targetPct || 75;
@@ -632,47 +709,53 @@ if (targetSlider) {
     });
 }
 
+// Data Management: CSV Export 
 window.exportToCSV = () => {
     if (historyLog.length === 0) return showToast("No history to export!", "error");
     let csvContent = "data:text/csv;charset=utf-8,Date,Time,Subject,Status\n";
-    historyLog.forEach(log => { csvContent += `"${log.date}","${log.time}","${log.subName}","${log.status}"\n`; });
+    historyLog.forEach(log => { 
+        csvContent += `"${log.date}","${log.time}","${log.subName}","${log.status}"\n`; 
+    });
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     const identifier = userProfile.regNo || userProfile.roll || "Report";
     link.setAttribute("download", `Attendance_${identifier}.csv`);
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    document.body.appendChild(link); 
+    link.click(); 
+    document.body.removeChild(link);
     showToast("Download Started!");
 };
 
+// Academic Cycles: New Semester Reset
 window.startNewSemester = () => {
-    if (confirm("Start a new semester? This sets all attendance to 0 but keeps your Subjects and Timetable.")) {
+    if(confirm("Start a new semester? This sets all attendance to 0 but keeps your Subjects and Timetable.")) {
         subjects.forEach(sub => { sub.present = 0; sub.total = 0; });
         historyLog = [];
-        if (userProfile.sem) {
+        if(userProfile.sem) {
             let nextSem = parseInt(userProfile.sem) + 1;
-            if (nextSem <= 8) userProfile.sem = nextSem.toString();
+            if(nextSem <= 8) userProfile.sem = nextSem.toString();
         }
         saveToLocal();
         showToast("New Semester Started! Good luck!");
     }
 };
 
+// Account Deletion
 window.hardResetApp = () => {
-    if (confirm("DANGER: Are you absolutely sure? This deletes ALL subjects and data!")) {
-        const user = auth.currentUser;
-        if (user) {
-            // Delete from cloud
+    if(confirm("DANGER: Are you absolutely sure? This deletes ALL subjects and data!")) {
+        const user = firebase.auth().currentUser;
+        if(user) {
             db.collection("users").doc(user.uid).delete().then(() => {
                 localStorage.clear();
-                window.location.href = "attendance.html";
+                window.location.href = "login.html";
             }).catch(e => {
                 console.error(e);
                 alert("Failed to delete cloud data.");
             });
         } else {
             localStorage.clear();
-            window.location.href = "attendance.html";
+            window.location.href = "login.html";
         }
     }
 };
@@ -680,8 +763,12 @@ window.hardResetApp = () => {
 // ==========================================
 // 9. INITIAL BOOT SEQUENCE
 // ==========================================
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log("Service Worker Registered"));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Attempt to load from LocalStorage immediately so UI doesn't blink while waiting for cloud
     let localProfile = localStorage.getItem('edu_profile');
     if (localProfile) userProfile = JSON.parse(localProfile);
 

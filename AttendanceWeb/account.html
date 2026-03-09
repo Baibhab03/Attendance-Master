@@ -62,7 +62,7 @@
                         <div class="avatar-wrapper">
                             <img src="https://placehold.co/120x120/00d2ff/ffffff?text=U" id="mainAvatarDisplay"
                                 alt="Profile">
-                            <div class="avatar-overlay" onclick="document.getElementById('avatarUpload').click()">
+                            <div class="camera-badge" onclick="document.getElementById('avatarUpload').click()">
                                 <i class='bx bx-camera'></i>
                             </div>
                             <input type="file" id="avatarUpload" accept="image/*" hidden>
@@ -140,7 +140,7 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Section / Batch</label>
+                            <label>Section</label>
                             <input type="text" id="profileInputSec" class="glass-input"
                                 oninput="updateIDCardRealtime()">
                         </div>
@@ -149,8 +149,7 @@
                 </div>
 
                 <button class="glass-btn primary full-width" onclick="saveProfile()"
-                    style="margin-top: 20px; padding: 15px; font-size: 1rem;"><i class='bx bx-save'></i> Save Profile
-                    Changes</button>
+                    style="margin-top: 20px; padding: 15px; font-size: 1rem;"><i class='bx bx-save'></i> Save Profile Changes</button>
             </div>
         </div>
     </div>

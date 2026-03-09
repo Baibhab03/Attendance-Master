@@ -524,6 +524,18 @@ body {
     font-weight: 600;
 }
 
+.text-btn {
+    padding: 6px 14px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600;
+    border-radius: 8px !important;
+    width: auto !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    letter-spacing: 0.5px;
+}
+
 .full-width {
     width: 100%;
 }
@@ -672,6 +684,26 @@ body {
     .delete-btn:hover {
         color: var(--danger);
     }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    
+    .glass-btn:hover {
+        background: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    .icon-btn:hover {
+        color: var(--accent);
+        background: rgba(0, 210, 255, 0.1);
+    }
+
+    .nav-links li a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--accent);
+    }
+    
+
 }
 
 /* ==========================================
