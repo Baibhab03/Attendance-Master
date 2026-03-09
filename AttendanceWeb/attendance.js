@@ -595,10 +595,13 @@ const renderAccount = () => {
         }
 
         // Live typing logic: Forces uppercase and auto-fills Roll Number
-        regInput.addEventListener('input', (e) => {
+       regInput.addEventListener('input', (e) => {
             e.target.value = e.target.value.toUpperCase();
             if (rollInput) {
+                // Auto-fill the Roll Input
                 rollInput.value = e.target.value.length >= 5 ? e.target.value.slice(-5) : e.target.value;
+                // FORCE the ID Card and Sidebar to catch this programmatic change!
+                updateIDCardRealtime(); 
             }
         });
     }
@@ -609,7 +612,6 @@ const renderAccount = () => {
     if(document.getElementById('profileInputCourse')) document.getElementById('profileInputCourse').value = userProfile.course || "";
     if(document.getElementById('profileInputSem')) document.getElementById('profileInputSem').value = userProfile.sem || "1";
     
-    // Initial avatar load
     document.getElementById('mainAvatarDisplay').src = userProfile.avatar || "https://placehold.co/120x120/00d2ff/ffffff?text=U";
     updateIDCardRealtime();
 };
@@ -632,8 +634,9 @@ window.updateIDCardRealtime = () => {
     const idRegEl = document.getElementById('idCardRegNo');
     if(idRegEl) idRegEl.textContent = `Reg No: ${reg}`;
 
-    // NEW: Live-update the avatar letter as they type their name!
-    userProfile.name = n !== "Student Name" ? n : ""; 
+    userProfile.name = n !== "Student Name" ? n : "";
+    userProfile.roll = r !== "--" ? r : "";
+    userProfile.sec = sec !== "--" ? sec : "";
     updateSidebarProfile();
 };
 
@@ -656,7 +659,11 @@ if (avatarInput) {
 }
 
 // Save Profile Logic
-window.saveProfile = () => {
+window.saveProfile = async () => {
+    const saveBtn = document.querySelector('button[onclick="saveProfile()"]');
+    const originalText = saveBtn ? saveBtn.innerHTML : "Save Profile Changes";
+    if(saveBtn) saveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Saving to Cloud...";
+
     userProfile.name = document.getElementById('profileInputName').value.trim();
     
     const regInput = document.getElementById('profileInputRegNo');
@@ -665,7 +672,7 @@ window.saveProfile = () => {
     const rollInput = document.getElementById('profileInputRoll');
     if(rollInput) {
         userProfile.roll = rollInput.value.trim();
-    } else if (userProfile.regNo.length >= 5) {
+    } else if (userProfile.regNo && userProfile.regNo.length >= 5) {
         userProfile.roll = userProfile.regNo.slice(-5);
     }
 
@@ -680,11 +687,16 @@ window.saveProfile = () => {
     if(document.getElementById('profileInputSem')) 
         userProfile.sem = document.getElementById('profileInputSem').value;
     
-    saveToLocal(); 
+    await saveToLocal(); 
     updateSidebarProfile();
     showToast("Profile Updated Successfully!");
 
-    const urlParams = newSearchParams(window.location.search);
+    if(saveBtn) saveBtn.innerHTML = "<i class='bx bx-check'></i> Saved!";
+    setTimeout(() => {
+        if(saveBtn) saveBtn.innerHTML = originalText;
+    }, 2000);
+
+    const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('newuser') === 'true') {
         setTimeout(() => {
             window.location.href = "attendance.html";
@@ -692,6 +704,7 @@ window.saveProfile = () => {
     }
 };
 
+// Settings Page 
 // Target Attendance Slider Logic
 const targetSlider = document.getElementById('targetSlider');
 if (targetSlider) {
@@ -727,7 +740,6 @@ window.exportToCSV = () => {
     showToast("Download Started!");
 };
 
-// Academic Cycles: New Semester Reset
 window.startNewSemester = () => {
     if(confirm("Start a new semester? This sets all attendance to 0 but keeps your Subjects and Timetable.")) {
         subjects.forEach(sub => { sub.present = 0; sub.total = 0; });
