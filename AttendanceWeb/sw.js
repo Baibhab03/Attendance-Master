@@ -13,7 +13,7 @@ const ASSETS_TO_CACHE = [
     './settings.html',
     './attendance.css',
     './account.css',
-    './signup.css',
+    './stylesignup.css',
     './timetable.css',
     './attendance.js',
     './manifest.json',
@@ -25,43 +25,45 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
-            console.log('Caching core assets...');
-            return cache.addAll(ASSETS_TO_CACHE);
+            console.log('Installing new service worker...');
+            // Using map + Promise.allSettled ensures installation continues even if a file is missing
+            return Promise.allSettled(
+                ASSETS_TO_CACHE.map(url => {
+                    return cache.add(url).catch(err => console.warn('Skipping missing file:', url));
+                })
+            );
         })
     );
     self.skipWaiting();
 });
 
-// 2. Activate Event: Clears out old caches if you update your app
+// 2. Activate Event: Clean up old versions
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cache => {
                     if (cache !== CACHE_NAME) {
-                        console.log('Clearing old cache...');
+                        console.log('Removing old cache:', cache);
                         return caches.delete(cache);
                     }
                 })
             );
         })
     );
+    return self.clients.claim();
 });
 
-// 3. Fetch Event: When the app asks for a file, check the cache first!
+// 3. Fetch Event: Intercept requests
 self.addEventListener('fetch', event => {
-    // Only cache GET requests
     if (event.request.method !== 'GET') return;
 
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
-            // If the file is in the cache, return it instantly!
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            // Otherwise, go fetch it from the internet
-            return fetch(event.request);
+            // Return cached version OR fetch from network
+            return cachedResponse || fetch(event.request).catch(() => {
+                // If both fail (offline and not cached), you could return an offline page here
+            });
         })
     );
-
 });
