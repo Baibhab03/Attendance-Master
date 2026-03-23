@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Attendance Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="attendance.css">
+</head>
+<body>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+
+    <div class="floating-nav-wrapper">
+        <nav class="main-nav-pill">
+            <a href="timetable.html" class="nav-item">
+                <div class="nav-icon"><i class='bx bx-table'></i></div>
+                <!-- <span class="nav-label">Timetable</span> -->
+            </a>
+            <a href="attendance.html" class="nav-item active">
+                <div class="nav-icon"><i class='bx bxs-home'></i></div>
+                <!-- <span class="nav-label">Home</span> -->
+            </a>
+            <a href="history.html" class="nav-item">
+                <div class="nav-icon"><i class='bx bx-history'></i></div>
+                <!-- <span class="nav-label">History</span> -->
+            </a>
+        </nav>
+        <a href="account.html" class="detached-account-btn">
+            <img src="https://placehold.co/50x50/00d2ff/ffffff?text=U" id="bottomNavAvatar" alt="Profile">
+        </a>
+    </div>
+
+    <div class="glass-shell">
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-icon"><i class='bx bxs-dashboard'></i></div>
+                <h1 class="logo">My <span>Dashboard</span></h1>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="addSubjectBtn" class="glass-btn primary text-btn"><i class='bx bx-plus'></i> Add Subject</button>
+                <a href="notification.html" style="position: relative; background: var(--glass-bg); border: 1px solid var(--glass-border); width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: var(--text-muted); text-decoration: none; transition: 0.2s;">
+                    <i class='bx bx-bell' style="font-size: 1.4rem;"></i>
+                    <span class="badge" style="position: absolute; top: -5px; right: -5px; display: none;">0</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="glass-card premium-glass" style="margin-bottom: 30px;">
+            <div class="stat-header">
+                <h3>Overall Attendance</h3>
+                <i class='bx bx-target-lock'></i>
+            </div>
+            <div class="pct-display" id="overallPct">0%</div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="overallBar"></div>
+            </div>
+            <p class="stat-subtitle" style="margin-top: 15px;"><span id="todayCount">0</span> subjects tracked</p>
+        </div>
+
+        <div id="happeningNowContainer" style="display: none; margin-bottom: 20px;"></div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn" data-tab="today"><i class='bx bx-calendar-check'></i> Today's Classes</button>
+            <button class="tab-btn active" data-tab="subjects"><i class='bx bx-book-open'></i> All Subjects</button>
+        </div>
+
+        <section id="tab-subjects" class="tab-content active">
+            <div id="subjectsContainer" class="card-list"></div>
+        </section>
+
+        <section id="tab-today" class="tab-content">
+            <button class="glass-btn dashed-btn full-width" onclick="openExtraClassModal()" style="margin-bottom: 20px;">
+                <i class='bx bx-plus'></i> Log an Extra Class Today
+            </button>
+            <div id="scheduleContainer" class="card-list"></div>
+        </section>
+
+        <div id="modalBackdrop" class="modal-backdrop">
+            <div class="glass-card modal">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Add Subject</h3>
+                    <button class="icon-btn" id="closeModalIcon"><i class='bx bx-x'></i></button>
+                </div>
+                <input type="hidden" id="editSubjectId">
+                <div class="form-group">
+                    <label>Subject Name</label>
+                    <input type="text" id="subjectName" class="glass-input" placeholder="e.g., Data Structures">
+                </div>
+                <div id="editFields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Classes Attended</label>
+                            <input type="number" id="editPresent" class="glass-input" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Classes</label>
+                            <input type="number" id="editTotal" class="glass-input" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="glass-btn" id="closeModal">Cancel</button>
+                    <button class="glass-btn primary" id="saveSubject">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="extraClassModal" class="modal-backdrop">
+            <div class="glass-card modal">
+                <div class="modal-header">
+                    <h3>Log Extra Class</h3>
+                    <button class="icon-btn" onclick="closeExtraClassModal()"><i class='bx bx-x'></i></button>
+                </div>
+                <div class="form-group">
+                    <label>Select Subject</label>
+                    <select id="extraSubjectSelect" class="glass-input premium-select"></select>
+                </div>
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time" id="extraTimeInput" class="glass-input">
+                </div>
+                <button class="glass-btn primary full-width mt-15" onclick="saveExtraClass()">Add Extra Class</button>
+            </div>
+        </div>
+
+    </div>
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="attendance.js"></script>
+</body>
+</html>

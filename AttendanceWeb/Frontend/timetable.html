@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable - Attendance Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="attendance.css">
+    <link rel="stylesheet" href="timetable.css">
+</head>
+<body>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+
+    <div class="floating-nav-wrapper">
+        <nav class="main-nav-pill">
+            <a href="timetable.html" class="nav-item active">
+                <div class="nav-icon"><i class='bx bx-table'></i></div>
+                <!-- <span class="nav-label">Timetable</span> -->
+            </a>
+            <a href="attendance.html" class="nav-item ">
+                <div class="nav-icon"><i class='bx bxs-home'></i></div>
+                <!-- <span class="nav-label">Home</span> -->
+            </a>
+            <a href="history.html" class="nav-item">
+                <div class="nav-icon"><i class='bx bx-history'></i></div>
+                <!-- <span class="nav-label">History</span> -->
+            </a>
+        </nav>
+        <a href="account.html" class="detached-account-btn">
+            <img src="https://placehold.co/50x50/00d2ff/ffffff?text=U" id="bottomNavAvatar" alt="Profile">
+        </a>
+    </div>
+    <div id="navBackdrop" class="nav-backdrop"></div>
+
+    <div class="glass-shell" style="max-width: 1000px;"> <header class="header">
+            <div class="logo-container">
+                <div class="logo-icon"><i class='bx bx-table'></i></div>
+                <h1 class="logo">Weekly <span>Grid</span></h1>
+            </div>
+            <button id="addTimetableSlotBtn" class="glass-btn primary"><i class='bx bx-plus'></i> Add Class</button>
+        </header>
+
+        <div class="glass-card timetable-sheet-container" style="padding: 0; overflow-x: auto;">
+            <table class="timetable-grid" id="timetableGrid">
+                </table>
+        </div>
+
+        <div id="slotModalBackdrop" class="modal-backdrop">
+            <div class="glass-card modal premium-modal">
+                <div class="modal-header">
+                    <h3 id="slotModalTitle">Add to Timetable</h3>
+                    <button class="icon-btn" id="closeSlotModal"><i class='bx bx-x'></i></button>
+                </div>
+                
+                <input type="hidden" id="editSlotId" value="">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Day</label>
+                        <select id="slotDaySelect" class="glass-input premium-select">
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" id="slotTimeInput" class="glass-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Subject</label>
+                    <select id="slotSubjectSelect" class="glass-input premium-select"></select>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text); white-space: nowrap;">
+                        <input type="checkbox" id="slotIsBreak" style="width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0;">
+                        <span style="font-size: 0.95rem;">Mark as Break / Lunch</span>
+                    </label>
+                </div>
+                
+                <div class="modal-actions" style="margin-top: 25px;">
+                    <button class="glass-btn absent" id="deleteSlotBtn" style="display:none;"><i class='bx bx-trash'></i></button>
+                    <button class="glass-btn primary full-width" id="saveSlotBtn">Save Class</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="attendance.js"></script>
+</body>
+</html>
