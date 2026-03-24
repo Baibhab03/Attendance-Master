@@ -1,8 +1,3 @@
-/* ==========================================
-   SETTINGS PAGE STYLES (PRO VERSION)
-   ========================================== */
-
-/* --- 1. TYPOGRAPHY & LAYOUT --- */
 .form-section-title {
     margin-top: 0;
     margin-bottom: 16px;
@@ -35,7 +30,6 @@
     margin-bottom: 0 !important;
 }
 
-/* Elegant faded line between settings */
 .subtle-divider {
     border: 0;
     height: 1px;
@@ -43,7 +37,6 @@
     margin: 10px 0;
 }
 
-/* --- 2. THEMATIC COLORS & CARDS --- */
 .text-accent {
     color: var(--accent);
 }
@@ -76,7 +69,6 @@
     border-left: 4px solid var(--danger);
 }
 
-/* --- 3. CUSTOM BUTTONS --- */
 .btn-success {
     border-color: rgba(46, 204, 113, 0.3);
     color: var(--success);
@@ -103,7 +95,6 @@
     }
 }
 
-/* --- 4. PREMIUM RANGE SLIDER --- */
 .slider-container {
     display: flex;
     align-items: center;
@@ -160,7 +151,6 @@
     box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
 }
 
-/* --- 5. iOS STYLE TOGGLE SWITCH --- */
 .setting-row {
     display: flex;
     justify-content: space-between;
@@ -217,7 +207,6 @@ input:checked+.slider:before {
     transform: translateX(24px);
 }
 
-/* --- 6. EXPORT BUTTONS GRID --- */
 .export-buttons-grid .glass-btn {
     transition: 0.2s ease;
 }

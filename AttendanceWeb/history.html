@@ -20,15 +20,14 @@
         <nav class="main-nav-pill">
             <a href="timetable.html" class="nav-item">
                 <div class="nav-icon"><i class='bx bx-table'></i></div>
-                <!-- <span class="nav-label">Timetable</span> -->
+                
             </a>
             <a href="attendance.html" class="nav-item">
                 <div class="nav-icon"><i class='bx bxs-home'></i></div>
-                <!-- <span class="nav-label">Home</span> -->
+                
             </a>
             <a href="history.html" class="nav-item active">
-                <div class="nav-icon "><i class='bx bx-history'></i></div>
-                <!-- <span class="nav-label">History</span> -->
+                <div class="nav-icon"><i class='bx bx-history'></i></div>
             </a>
         </nav>
         <a href="account.html" class="detached-account-btn">
@@ -53,8 +52,7 @@
         </div>
 
         <section id="tab-list" class="tab-content active">
-            <div id="historyContainer" class="card-list compact-history-list">
-                </div>
+            <div id="historyContainer" class="card-list compact-history-list"></div>
         </section>
 
         <section id="tab-calendar" class="tab-content">
@@ -76,6 +74,18 @@
                 </div>
             </div>
         </section>
+
+        <div id="dayDetailsModal" class="modal-backdrop">
+            <div class="glass-card modal" style="max-height: 80vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="dayDetailsTitle">Logs for Date</h3>
+                    <button class="icon-btn" onclick="document.getElementById('dayDetailsModal').style.display='none'"><i class='bx bx-x'></i></button>
+                </div>
+                <div id="dayDetailsList" class="card-list compact-history-list">
+                    </div>
+            </div>
+        </div>
+
     </div>
     <script src="attendance.js"></script>
 </body>

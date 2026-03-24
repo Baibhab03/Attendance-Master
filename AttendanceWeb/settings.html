@@ -76,7 +76,7 @@
                 <hr class="subtle-divider">
                 <div style="margin-top: 15px;">
                     <h4 class="settings-title">Export Attendance Report</h4>
-                    <p class="settings-desc">Download your entire history. (CSV removed per request)</p>
+                    <p class="settings-desc">Download your entire history.</p>
                     <div class="export-buttons-grid" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                         <button class="glass-btn" onclick="exportToExcel()" style="flex: 1; justify-content: center; background: rgba(39, 174, 96, 0.2); border-color: #27ae60; color: #2ecc71;">
                             <i class='bx bx-spreadsheet'></i> Excel
@@ -85,6 +85,14 @@
                             <i class='bx bxs-file-pdf'></i> PDF
                         </button>
                     </div>
+                </div>
+                <hr class="subtle-divider">
+                <div style="margin-top: 15px;">
+                    <h4 class="settings-title">New Semester Transition</h4>
+                    <p class="settings-desc">Wipe attendance, history, and timetable. Keep your profile and settings.</p>
+                    <button class="glass-btn full-width mt-15" onclick="startNewSemester()" style="background: rgba(0, 210, 255, 0.1); border-color: var(--accent); color: var(--accent);">
+                        <i class='bx bx-reset'></i> Start New Semester
+                    </button>
                 </div>
             </div>
 

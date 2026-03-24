@@ -80,7 +80,6 @@
             const togglePasswordIcon = document.getElementById('toggleLoginPassword');
             const submitBtn = document.getElementById('loginSubmitBtn');
 
-            // Password Visibility Toggle
             togglePasswordIcon.addEventListener('click', () => {
                 if (passwordInput.type === 'password') {
                     passwordInput.type = 'text';
@@ -94,12 +93,10 @@
             function showError(message) {
                 errorMessage.textContent = message;
                 errorMessage.style.display = 'block';
-                // Reset button if error
                 submitBtn.innerHTML = 'Login to Dashboard';
                 submitBtn.disabled = false;
             }
 
-            // Form Submit Logic
             loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 errorMessage.style.display = 'none';
@@ -109,12 +106,10 @@
 
                 if (!email || !password) return showError('Please enter both email and password.');
 
-                // UI Feedback: Show Loading State
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
                 submitBtn.disabled = true;
 
                 try {
-                    // Firebase Auth
                     await auth.signInWithEmailAndPassword(email, password);
                     window.location.href = "attendance.html";
                 } catch (error) {

@@ -42,9 +42,10 @@
                     <input type="email" id="email" name="email" placeholder="Email" required />
                 </div>
 
-                <div class="input-group">
-                    <i class="fas fa-id-badge"></i>
-                    <input type="text" id="roll" name="roll" placeholder="Roll Number / Student ID" required />
+                <div class="form-group">
+                    <label>Registration Number</label>
+                    <input type="text" id="signupRegNo" class="glass-input" placeholder="Reg. Number / Student ID"
+                        style="text-transform: uppercase;" required>
                 </div>
 
                 <div class="input-group">
@@ -118,27 +119,32 @@
 
                 const fullName = document.getElementById('fullName').value.trim();
                 const email = document.getElementById('email').value.trim();
-                const roll = document.getElementById('roll').value.trim();
+                const regNo = document.getElementById('signupRegNo').value.trim().toUpperCase();
                 const password = passwordInput.value;
                 const confirmPassword = confirmPasswordInput.value;
 
-                if (!fullName || !email || !roll || !password || !confirmPassword) return showError('Please fill out all fields.');
+                if (!fullName || !email || !regNo || !password || !confirmPassword) return showError('Please fill out all fields.');
                 if (password.length < 8) return showError('Password must be at least 8 characters long.');
                 if (password !== confirmPassword) return showError('Passwords do not match.');
 
-                // UI Feedback: Show Loading State
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
                 submitBtn.disabled = true;
 
                 try {
-                    // 1. Create User in Firebase Auth
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                     const user = userCredential.user;
+                    const autoRoll = regNo.length >= 5 ? regNo.slice(-5) : regNo;
 
-                    // 2. Create User Profile in Firestore Database (PRO: Includes default preferences)
                     await db.collection("users").doc(user.uid).set({
                         userProfile: {
-                            name: fullName, roll: roll, sec: "", course: "", sem: "", regNo: "", avatar: "https://placehold.co/120x120/00d2ff/ffffff?text=U", email: email
+                            name: fullName,
+                            regNo: regNo,
+                            roll: autoRoll,
+                            sec: "",
+                            course: "",
+                            sem: "1",
+                            avatar: "https://placehold.co/120x120/00d2ff/ffffff?text=" + fullName.charAt(0).toUpperCase(),
+                            email: email
                         },
                         preferences: {
                             targetPct: 75,
@@ -150,10 +156,10 @@
                         subjects: [],
                         timetable: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [] },
                         historyLog: [],
-                        overrides: {}
+                        overrides: {},
+                        dismissedAlerts: []
                     });
 
-                    // 3. Success Feedback
                     submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Success! Redirecting...';
                     submitBtn.style.background = '#2ecc71';
 

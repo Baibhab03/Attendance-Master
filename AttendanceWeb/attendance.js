@@ -14,7 +14,6 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Global State Variables
 let subjects = [];
 let timetable = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [] };
 let historyLog = [];
@@ -23,11 +22,9 @@ let userProfile = { name: "", roll: "", sec: "", course: "", sem: "", regNo: "",
 let preferences = { targetPct: 75, alerts: true, predictive: true, autoMark: true, autoDelete: "never" };
 let overrides = {};
 
-// Calendar State
 let currentCalMonth = new Date().getMonth();
 let currentCalYear = new Date().getFullYear();
 
-// --- Save & Load Engine ---
 const saveToLocal = async () => {
     const user = auth.currentUser;
     if (user) {
@@ -94,9 +91,9 @@ window.handleLogout = () => {
     });
 };
 
-// ==========================================
+// ==================================
 // 2. GLOBAL UI UTILS & MODALS
-// ==========================================
+// ==================================
 const showToast = (message, type = 'success') => {
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -142,9 +139,9 @@ if (tabs.length > 0) {
     });
 }
 
-// ==========================================
+// ==========================
 // 3. DASHBOARD LOGIC 
-// ==========================================
+// ==========================
 const subModal = document.getElementById('modalBackdrop');
 window.openSubModalGlobal = (isEdit = false, subId = null) => {
     if (!subModal) return;
@@ -191,6 +188,10 @@ const renderDashboard = () => {
     if (!statsCont) return;
     statsCont.innerHTML = '';
 
+    if (document.getElementById('todayCount')) {
+        document.getElementById('todayCount').textContent = subjects.length;
+    }
+
     const target = preferences.targetPct || 75;
     const targetDecimal = target / 100;
     let gPres = 0, gTotal = 0;
@@ -233,7 +234,7 @@ const renderDashboard = () => {
     renderTodaySchedule();
 };
 
-window.markAttendance = (id, isPresent) => {
+window.markAttendance = (id, isPresent, slotId = null) => {
     const sub = subjects.find(s => s.id === id);
     if (sub) {
         sub.total++; if (isPresent) sub.present++;
@@ -244,6 +245,14 @@ window.markAttendance = (id, isPresent) => {
             time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             timestamp: now.getTime()
         });
+
+        if (slotId) {
+            const todayStr = new Date().toDateString();
+            if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [], marked: {} };
+            if (!overrides[todayStr].marked) overrides[todayStr].marked = {};
+            overrides[todayStr].marked[slotId] = isPresent ? 'Present' : 'Absent';
+        }
+
         saveToLocal(); showToast(`Marked ${isPresent ? 'Present' : 'Absent'} for ${sub.name}`);
     }
 };
@@ -272,7 +281,7 @@ window.deleteHistoryLog = (logId) => {
 
 
 // ==========================================
-// 4. TIMETABLE
+// 4. TIMETABLE ENGINE
 // ==========================================
 const renderTimetableGrid = () => {
     const grid = document.getElementById('timetableGrid');
@@ -309,13 +318,11 @@ const renderTimetableGrid = () => {
                 const sub = slot.subId === 'free' ? {name: "Break"} : subjects.find(s => s.id == slot.subId);
                 const subName = sub ? sub.name : "Deleted";
                 const breakClass = slot.isBreak ? "slot-break" : "";
-                
                 const inlineStyle = slot.isBreak ? "" : "background: rgba(255, 255, 255, 0.08);";
                 
                 row += `<td>
                     <div class="grid-slot ${breakClass}" style="${inlineStyle}" onclick="openSlotModal('edit', '${slot.slotId}', '${day}')">
                         <span class="slot-name">${subName}</span>
-                        <span class="slot-time">${time}</span>
                     </div>
                 </td>`;
             } else {
@@ -418,7 +425,7 @@ if (document.getElementById('deleteSlotBtn')) {
 
 window.cancelTodayClass = (slotId, subId, isExtra = false) => {
     const todayStr = new Date().toDateString();
-    if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [] };
+    if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [], marked: {} };
     if (isExtra) overrides[todayStr].extra = overrides[todayStr].extra.filter(s => s.slotId !== slotId);
     else if (!overrides[todayStr].canceled.includes(slotId)) overrides[todayStr].canceled.push(slotId);
     saveToLocal();
@@ -432,7 +439,7 @@ const renderTodaySchedule = () => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const actualToday = days[new Date().getDay()];
     const todayStr = new Date().toDateString();
-    const todayOverrides = overrides[todayStr] || { canceled: [], extra: [] };
+    const todayOverrides = overrides[todayStr] || { canceled: [], extra: [], marked: {} };
 
     let allSlots = [...(timetable[actualToday] || []), ...todayOverrides.extra];
     allSlots.sort((a, b) => a.time.localeCompare(b.time));
@@ -441,11 +448,28 @@ const renderTodaySchedule = () => {
     const nowAbs = (new Date().getHours() * 60) + new Date().getMinutes();
 
     scheduleCont.innerHTML = allSlots.map(slot => {
-        if (todayOverrides.canceled.includes(slot.slotId)) return '';
         if (slot.isBreak || slot.subId === 'free') return ''; 
-
+        
         const sub = subjects.find(s => s.id === slot.subId);
         if (!sub) return '';
+
+        const isCanceled = todayOverrides.canceled && todayOverrides.canceled.includes(slot.slotId);
+        const markedStatus = todayOverrides.marked ? todayOverrides.marked[slot.slotId] : null;
+
+        if (isCanceled) {
+            return `<div class="glass-card subject-row action-taken-canceled" style="border-left: 4px solid var(--text-muted)">
+                <div class="row-info"><span class="time-tag" style="text-decoration: line-through;">${slot.time}</span><h4>${sub.name}</h4></div>
+                <div class="actions"><span class="status-badge" style="color: var(--text-muted);"><i class='bx bx-block'></i> Canceled</span></div>
+            </div>`;
+        }
+
+        if (markedStatus) {
+            const isPres = markedStatus === 'Present';
+            return `<div class="glass-card subject-row ${isPres ? 'action-taken-present' : 'action-taken-absent'}" style="border-left: 4px solid ${isPres ? 'var(--success)' : 'var(--danger)'}">
+                <div class="row-info"><span class="time-tag">${slot.time}</span><h4>${sub.name}</h4></div>
+                <div class="actions"><span class="status-badge ${isPres ? 'safe' : 'danger'}"><i class='bx bx-check'></i> ${markedStatus}</span></div>
+            </div>`;
+        }
 
         const [h, m] = slot.time.split(':').map(Number);
         const slotAbs = (h * 60) + m;
@@ -454,8 +478,8 @@ const renderTodaySchedule = () => {
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div><span style="color:var(--danger); font-size:0.75rem; font-weight:bold;">LIVE NOW</span><br><b>${sub.name}</b><p style="margin:0; font-size:0.85rem;">${slot.time}</p></div>
                     <div style="display:flex; gap:10px;">
-                        <button class="glass-btn primary" onclick="markAttendance(${sub.id}, true)">Present</button>
-                        <button class="glass-btn absent" onclick="markAttendance(${sub.id}, false)">Absent</button>
+                        <button class="glass-btn primary" onclick="markAttendance(${sub.id}, true, '${slot.slotId}')">Present</button>
+                        <button class="glass-btn absent" onclick="markAttendance(${sub.id}, false, '${slot.slotId}')">Absent</button>
                     </div>
                 </div>
             </div>`;
@@ -464,8 +488,8 @@ const renderTodaySchedule = () => {
         return `<div class="glass-card subject-row" style="border-left: 4px solid var(--glass-border)">
             <div class="row-info"><span class="time-tag">${slot.time}</span><h4>${sub.name}</h4></div>
             <div class="actions">
-                <button class="glass-btn present text-btn" onclick="markAttendance(${sub.id}, true)">Present</button>
-                <button class="glass-btn absent text-btn" onclick="markAttendance(${sub.id}, false)">Absent</button>
+                <button class="glass-btn present text-btn" onclick="markAttendance(${sub.id}, true, '${slot.slotId}')">Present</button>
+                <button class="glass-btn absent text-btn" onclick="markAttendance(${sub.id}, false, '${slot.slotId}')">Absent</button>
                 <button class="icon-btn" onclick="cancelTodayClass('${slot.slotId}', ${sub.id})"><i class='bx bx-x-circle'></i></button>
             </div>
         </div>`;
@@ -494,14 +518,14 @@ window.saveExtraClass = () => {
     const time = document.getElementById('extraTimeInput').value;
     if (!time) return alert("Select time");
     const todayStr = new Date().toDateString();
-    if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [] };
+    if (!overrides[todayStr]) overrides[todayStr] = { canceled: [], extra: [], marked: {} };
     overrides[todayStr].extra.push({ slotId: 'extra_' + Date.now(), subId: parseInt(subId), time, isExtra: true });
     saveToLocal();
     window.closeExtraClassModal();
 };
 
 // ==========================================
-// 6. HISTORY, CALENDAR & AUTO-DELETE
+// 6. HISTORY, CALENDAR
 // ==========================================
 const cleanUpHistory = () => {
     if (!preferences.autoDelete || preferences.autoDelete === "never") return;
@@ -531,19 +555,41 @@ const renderCalendar = () => {
     const grid = document.getElementById('calendarGrid');
     const display = document.getElementById('calendarMonthDisplay');
     if (!grid || !display) return;
+    
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     display.textContent = `${monthNames[currentCalMonth]} ${currentCalYear}`;
+    
     const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
     const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
     let html = '';
+    
     for (let i = 0; i < firstDay; i++) html += `<div class="calendar-day empty"></div>`;
+    
     for (let i = 1; i <= daysInMonth; i++) {
         const dStr = new Date(currentCalYear, currentCalMonth, i).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         const dayLogs = historyLog.filter(l => l.date === dStr);
         let dots = dayLogs.slice(0, 3).map(l => `<div class="indicator-dot ${l.status === 'Present' ? 'present' : 'absent'}"></div>`).join('');
-        html += `<div class="calendar-day">${i}<div class="day-indicators">${dots}</div></div>`;
+        
+        const clickAction = dayLogs.length > 0 ? `onclick="openDayDetails('${dStr}')"` : '';
+        const cursorStyle = dayLogs.length > 0 ? 'cursor: pointer;' : 'cursor: default;';
+        
+        html += `<div class="calendar-day" ${clickAction} style="${cursorStyle}">${i}<div class="day-indicators">${dots}</div></div>`;
     }
     grid.innerHTML = html;
+};
+
+window.openDayDetails = (dateStr) => {
+    const logs = historyLog.filter(l => l.date === dateStr);
+    if (logs.length === 0) return;
+    
+    document.getElementById('dayDetailsTitle').textContent = `Logs for ${dateStr}`;
+    document.getElementById('dayDetailsList').innerHTML = logs.map(log => `
+        <div class="glass-card history-card" style="border-left-color: ${log.status === 'Present' ? 'var(--success)' : 'var(--danger)'};">
+            <div class="history-info"><h4>${log.subName}</h4><p class="history-date">${log.time}</p></div>
+            <div class="history-actions"><span class="status-badge ${log.status === 'Present' ? 'safe' : 'danger'}">${log.status}</span></div>
+        </div>`).join('');
+    
+    document.getElementById('dayDetailsModal').style.display = 'flex';
 };
 
 if (document.getElementById('prevMonthBtn')) {
@@ -655,6 +701,17 @@ window.exportToPDF = () => {
     doc.save(`Attendance_${userProfile.regNo || "Report"}.pdf`);
 };
 
+window.startNewSemester = () => {
+    if (confirm("DANGER: Start a new semester? This will WIPE your subjects, timetable, and history. Your profile and settings will be saved.")) {
+        subjects = [];
+        timetable = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [] };
+        historyLog = [];
+        overrides = {};
+        saveToLocal();
+        showToast("New Semester initialized!", "success");
+    }
+};
+
 window.hardResetApp = () => {
     if (confirm("DANGER: Are you absolutely sure? This deletes ALL subjects and data!")) {
         const user = firebase.auth().currentUser;
@@ -663,7 +720,6 @@ window.hardResetApp = () => {
     }
 };
 
-// --- ACCOUNT ID CARD & EMAIL LOGIC ---
 const renderAccount = () => {
     if (!document.getElementById('profileInputName')) return; 
     
@@ -702,7 +758,6 @@ window.updateIDCardRealtime = () => {
     document.getElementById('idCardRegNo').textContent = `Reg No: ${reg}`;
 };
 
-// Avatar Upload Logic Restored
 const avatarInput = document.getElementById('avatarUpload');
 if (avatarInput) {
     avatarInput.addEventListener('change', function () {
@@ -751,24 +806,30 @@ document.addEventListener('DOMContentLoaded', () => {
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             const targetUrl = link.getAttribute('href');
-            
-            if (window.location.pathname.endsWith(targetUrl) || targetUrl === '#') {
-                e.preventDefault();
-                return;
-            }
-
+            if (window.location.pathname.endsWith(targetUrl) || targetUrl === '#') { e.preventDefault(); return; }
             e.preventDefault();
-            
             navLinks.forEach(n => n.classList.remove('active'));
             link.classList.add('active');
-
-            setTimeout(() => {
-                window.location.href = targetUrl;
-            }, 300); 
+            setTimeout(() => { window.location.href = targetUrl; }, 300); 
         });
     });
 });
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js?v=2.1.0'); });
+    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js?v=1.3.0.7'); });
+}
+
+// ==========================================
+// 9. PWA SERVICE WORKER REGISTRATION
+// ==========================================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=3.1.0.7')
+            .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+                console.error('ServiceWorker registration failed: ', error);
+            });
+    });
 }

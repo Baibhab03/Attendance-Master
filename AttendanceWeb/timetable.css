@@ -61,7 +61,6 @@
 
 .timetable-grid tr.current-day td.day-cell {
     color: var(--accent);
-    /* border-left: 4px solid var(--accent); */
     background: rgba(0, 210, 255, 0.1);
 }
 

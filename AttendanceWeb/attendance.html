@@ -42,7 +42,6 @@
                 <div class="logo-icon"><i class='bx bxs-dashboard'></i></div>
                 <h1 class="logo">My <span>Dashboard</span></h1>
             </div>
-            
             <div style="display: flex; gap: 10px; align-items: center;">
                 <button id="addSubjectBtn" class="glass-btn primary text-btn"><i class='bx bx-plus'></i> Add Subject</button>
                 <a href="notification.html" style="position: relative; background: var(--glass-bg); border: 1px solid var(--glass-border); width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: var(--text-muted); text-decoration: none; transition: 0.2s;">
@@ -67,15 +66,15 @@
         <div id="happeningNowContainer" style="display: none; margin-bottom: 20px;"></div>
 
         <div class="nav-tabs">
-            <button class="tab-btn" data-tab="today"><i class='bx bx-calendar-check'></i> Today's Classes</button>
-            <button class="tab-btn active" data-tab="subjects"><i class='bx bx-book-open'></i> All Subjects</button>
+            <button class="tab-btn active" data-tab="today"><i class='bx bx-calendar-check'></i> Today's Classes</button>
+            <button class="tab-btn" data-tab="subjects"><i class='bx bx-book-open'></i> All Subjects</button>
         </div>
 
-        <section id="tab-subjects" class="tab-content active">
+        <section id="tab-subjects" class="tab-content">
             <div id="subjectsContainer" class="card-list"></div>
         </section>
 
-        <section id="tab-today" class="tab-content">
+        <section id="tab-today" class="tab-content active">
             <button class="glass-btn dashed-btn full-width" onclick="openExtraClassModal()" style="margin-bottom: 20px;">
                 <i class='bx bx-plus'></i> Log an Extra Class Today
             </button>

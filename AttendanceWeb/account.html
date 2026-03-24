@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account - Attendance Master</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="manifest" href="manifest.json">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
+
     <link rel="stylesheet" href="attendance.css">
     <link rel="stylesheet" href="account.css">
 </head>
+
 <body>
     <div class="bg-shape shape-1"></div>
     <div class="bg-shape shape-2"></div>
@@ -22,15 +25,15 @@
         <nav class="main-nav-pill">
             <a href="timetable.html" class="nav-item">
                 <div class="nav-icon"><i class='bx bx-table'></i></div>
-                <span class="nav-label">Timetable</span>
+
             </a>
             <a href="attendance.html" class="nav-item">
                 <div class="nav-icon"><i class='bx bxs-home'></i></div>
-                <span class="nav-label">Home</span>
+
             </a>
             <a href="history.html" class="nav-item">
                 <div class="nav-icon"><i class='bx bx-history'></i></div>
-                <span class="nav-label">History</span>
+
             </a>
         </nav>
         <a href="account.html" class="detached-account-btn active">
@@ -44,7 +47,8 @@
                 <div class="logo-icon"><i class='bx bx-user-circle'></i></div>
                 <h1 class="logo">My <span>Profile</span></h1>
             </div>
-            <a href="settings.html" class="icon-btn" style="background: var(--glass-bg); border: 1px solid var(--glass-border); width: 42px; height: 42px; border-radius: 12px; text-decoration: none;">
+            <a href="settings.html" class="icon-btn"
+                style="background: var(--glass-bg); border: 1px solid var(--glass-border); width: 42px; height: 42px; border-radius: 12px; text-decoration: none;">
                 <i class='bx bx-cog' style="font-size: 1.4rem;"></i>
             </a>
         </header>
@@ -75,27 +79,32 @@
 
         <div class="card-list">
             <div class="glass-card">
-                <h3 class="form-section-title text-accent" style="margin-top:0;"><i class='bx bx-id-card'></i> Personal Information</h3>
-                
+                <h3 class="form-section-title text-accent" style="margin-top:0;"><i class='bx bx-id-card'></i> Personal
+                    Information</h3>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>Full Name</label>
-                        <input type="text" id="profileInputName" class="glass-input" placeholder="Enter your full name" oninput="updateIDCardRealtime()">
+                        <input type="text" id="profileInputName" class="glass-input" placeholder="Enter your full name"
+                            oninput="updateIDCardRealtime()">
                     </div>
                     <div class="form-group">
                         <label>Contact Email (Linked)</label>
-                        <input type="email" id="profileInputEmail" class="glass-input" readonly style="opacity: 0.6; cursor: not-allowed;">
+                        <input type="email" id="profileInputEmail" class="glass-input" readonly
+                            style="opacity: 0.6; cursor: not-allowed;">
                     </div>
                 </div>
             </div>
 
             <div class="glass-card">
-                <h3 class="form-section-title text-accent" style="margin-top:0;"><i class='bx bx-book-bookmark'></i> Academic Details</h3>
+                <h3 class="form-section-title text-accent" style="margin-top:0;"><i class='bx bx-book-bookmark'></i>
+                    Academic Details</h3>
                 <div class="form-group">
                     <label>Course / Program</label>
-                    <input type="text" id="profileInputCourse" class="glass-input" placeholder="e.g. B.Tech CSE" oninput="updateIDCardRealtime()">
+                    <input type="text" id="profileInputCourse" class="glass-input" placeholder="e.g. B.Tech CSE"
+                        oninput="updateIDCardRealtime()">
                 </div>
-                
+
                 <div class="form-group">
                     <label>Current Semester</label>
                     <select id="profileInputSem" class="glass-input premium-select" onchange="updateIDCardRealtime()">
@@ -113,26 +122,39 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Roll Number</label>
-                        <input type="text" id="profileInputRoll" class="glass-input" placeholder="e.g. 45" oninput="updateIDCardRealtime()">
+                        <input type="text" id="profileInputRoll" class="glass-input" placeholder="e.g. 45"
+                            oninput="updateIDCardRealtime()">
                     </div>
                     <div class="form-group">
                         <label>Section / Batch</label>
-                        <input type="text" id="profileInputSec" class="glass-input" placeholder="e.g. A" oninput="updateIDCardRealtime()">
+                        <input type="text" id="profileInputSec" class="glass-input" placeholder="e.g. A"
+                            oninput="updateIDCardRealtime()">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Registration Number</label>
-                    <input type="text" id="profileInputRegNo" class="glass-input" placeholder="University Reg No." oninput="updateIDCardRealtime()" style="text-transform: uppercase;">
+                    <input type="text" id="profileInputRegNo" class="glass-input" placeholder="University Reg No."
+                        oninput="updateIDCardRealtime()" style="text-transform: uppercase;">
                 </div>
 
-                <button class="glass-btn primary full-width mt-15 shadow-glow" onclick="saveProfile()" id="saveProfileBtn">
+                <button class="glass-btn primary full-width mt-15 shadow-glow" onclick="saveProfile()"
+                    id="saveProfileBtn">
                     <i class='bx bx-save'></i> Save Profile Changes
                 </button>
             </div>
         </div>
     </div>
+    <div class="glass-card danger-card">
+        <h3 class="form-section-title text-danger">
+            <i class='bx bx-power-off'></i> Account Actions
+        </h3>
+        <button class="glass-btn logout-btn full-width" onclick="handleLogout()">
+            <i class='bx bx-log-out' style="font-size: 1.3rem;"></i> Secure Log Out
+        </button>
+    </div>
     <div id="toastContainer" class="toast-container"></div>
     <script src="attendance.js"></script>
 </body>
+
 </html>
