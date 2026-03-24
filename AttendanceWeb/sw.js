@@ -1,4 +1,4 @@
-const CACHE_NAME = 'attendance-master-v1.0';
+const CACHE_NAME = 'attendance-master-v3.1.0.7';
 
 // List all the core files your app needs to run the UI
 const ASSETS_TO_CACHE = [
